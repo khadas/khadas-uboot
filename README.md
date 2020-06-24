@@ -1,4 +1,4 @@
-# Khadas u-boot [![Build Status](https://travis-ci.com/krescue/khadas-uboot.svg?branch=master)](https://travis-ci.com/krescue/khadas-uboot)
+# Khadas u-boot [![Build Status](https://travis-ci.org/krescue/khadas-uboot.svg?branch=master)](https://travis-ci.org/krescue/khadas-uboot)
 
 mainline u-boot for Khadas VIM and EDGE sbc series
 
