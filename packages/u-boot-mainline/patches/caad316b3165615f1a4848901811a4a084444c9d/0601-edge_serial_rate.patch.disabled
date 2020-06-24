@@ -1,0 +1,53 @@
+From bd4250eded6904ec9e422bf537f25c5b2f8430db Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Sat, 23 May 2020 17:38:29 +0900
+Subject: [PATCH] edge_serial_rate
+
+---
+ configs/khadas-edge-captain-rk3399_defconfig | 2 +-
+ configs/khadas-edge-rk3399_defconfig         | 2 +-
+ configs/khadas-edge-v-rk3399_defconfig       | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/configs/khadas-edge-captain-rk3399_defconfig b/configs/khadas-edge-captain-rk3399_defconfig
+index c389caa8..b5105f1d 100644
+--- a/configs/khadas-edge-captain-rk3399_defconfig
++++ b/configs/khadas-edge-captain-rk3399_defconfig
+@@ -75,7 +75,7 @@ CONFIG_REGULATOR_PWM=y
+ CONFIG_REGULATOR_RK8XX=y
+ CONFIG_PWM_ROCKCHIP=y
+ CONFIG_RAM_RK3399_LPDDR4=y
+-CONFIG_BAUDRATE=1500000
++#CONFIG_BAUDRATE=1500000
+ CONFIG_DEBUG_UART_SHIFT=2
+ CONFIG_SYSRESET=y
+ CONFIG_CMD_GPIO=y
+diff --git a/configs/khadas-edge-rk3399_defconfig b/configs/khadas-edge-rk3399_defconfig
+index ffc1c778..8c0686d6 100644
+--- a/configs/khadas-edge-rk3399_defconfig
++++ b/configs/khadas-edge-rk3399_defconfig
+@@ -73,7 +73,7 @@ CONFIG_REGULATOR_PWM=y
+ CONFIG_REGULATOR_RK8XX=y
+ CONFIG_PWM_ROCKCHIP=y
+ CONFIG_RAM_RK3399_LPDDR4=y
+-CONFIG_BAUDRATE=1500000
++#CONFIG_BAUDRATE=1500000
+ CONFIG_DEBUG_UART_SHIFT=2
+ CONFIG_SYSRESET=y
+ CONFIG_CMD_GPIO=y
+diff --git a/configs/khadas-edge-v-rk3399_defconfig b/configs/khadas-edge-v-rk3399_defconfig
+index 44402ea8..0c026f1e 100644
+--- a/configs/khadas-edge-v-rk3399_defconfig
++++ b/configs/khadas-edge-v-rk3399_defconfig
+@@ -74,7 +74,7 @@ CONFIG_REGULATOR_PWM=y
+ CONFIG_REGULATOR_RK8XX=y
+ CONFIG_PWM_ROCKCHIP=y
+ CONFIG_RAM_RK3399_LPDDR4=y
+-CONFIG_BAUDRATE=1500000
++#CONFIG_BAUDRATE=1500000
+ CONFIG_DEBUG_UART_SHIFT=2
+ CONFIG_SYSRESET=y
+ CONFIG_CMD_GPIO=y
+-- 
+2.17.1
+

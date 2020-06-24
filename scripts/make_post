@@ -1,0 +1,145 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make description
+
+PR=$(dirname $0)
+RP=$(realpath $PR)
+
+cd "$PR" || exit 1
+
+. ./build.conf
+
+(
+cd $UBOOT_DIR2
+md5sum *.bin > list.md5sum
+)
+
+ls -l1 
+FEATURES="$(cat ../README.features)"
+
+(
+
+echo "# VIMx (VIM1 VIM2 VIM3 VIM3L) mainline uboot images (GENERATED: $(TZ= date))"
+
+cd $UBOOT_DIR2
+
+echo "
+$FEATURES
+
+## VIMx sd / mmc / emmc uboot
+"
+
+for s in VIM*sd.bin; do
+    echo "+ $s"
+done
+
+echo "
+    # write to sd / emmc - example
+    dd if=$s of=/dev/mmcblk? conv=fsync,notrunc bs=442 count=1
+    dd if=$s of=/dev/mmcblk? conv=fsync,notrunc bs=512 skip=1 seek=1
+
+!NOTE: same can be writed by 0 offset to sd / mmc ( cat VIM?.u-boot.sd.bin > /dev/mmcblk? ) 
+!NOTE: but partition table will be rewrited missed ( by 442 offset ) and need created it"
+
+echo "
+## VIMx spi flash uboot
+"
+
+for s in VIM*spi.bin; do
+    echo "+ $s"
+done
+
+echo "
+!NOTE: write to spi flash by 0 offset
+
+## EDGE sd / mmc / emmc uboot
+"
+
+for s in *.64.bin; do
+    [ -e "$s" ] && \
+    echo "+ $s"
+done
+
+[ -e "$s" ] && \
+echo "
+    # write to sd / emmc - example
+    dd if=$s of=/dev/mmcblk? conv=fsync,notrunc seek=64
+
+!NOTE: write to 64*512 bytes offset
+"
+
+for s in Edge*sd.bin ; do
+    [ -e "$s" ] && \
+    echo "+ $s"
+done
+
+    [ -e "$s" ] && \
+echo "
+    # write to sd / emmc - example
+    dd if=$s of=/dev/mmcblk? conv=fsync,notrunc skip=64 seek=64
+    # or just from begin and rewrite mbr
+    dd if=$s of=/dev/mmcblk? conv=fsync,notrunc
+
+!NOTE: write to 0 offset"
+
+echo "
+## EDGEx spi flash uboot
+"
+
+for s in Edge*spi.bin; do
+    [ -e "$s" ] && \
+    echo "+ $s"
+done
+
+    [ -e "$s" ] && \
+echo "
+!NOTE: write to spi flash by 0 offset"
+
+echo "
+## VIMx mmc uboot for aml-burn-tool
+"
+
+for s in VIM*aml.img; do
+    echo "+ $s"
+done
+
+echo "
+!NOTE: emmc mainline uboot images for burn via aml-burn-tool software
+    
+    # burn example
+    aml-burn-tool -b VIM? -i VIM?.uboot-mainline.emmc.aml.img"
+
+echo "
+## VIMx mmc uboot for krescue
+"
+
+for s in VIM*kresq; do
+    echo "+ $s"
+done
+
+echo "
+!NOTE: emmc mainline uboot images for krescue software"
+
+echo "
+
+## ADDITIONAL
+
++ list.md5sum	- md5 sum list
+
+## DOWNLOADS
+
++ https://dl.khadas.com/Firmware/uboot/main-line/
++ https://github.com/hyphop/khadas-uboot/releases/tag/last
+
+## LINKS
+
++ https://docs.khadas.com/
++ https://forum.khadas.com/
++ https://github.com/khadas/
++ https://github.com/hyphop/khadas-uboot
++ https://dl.khadas.com/Firmware/Krescue/
+"
+
+) | tee $UBOOT_DIR2/README.txt

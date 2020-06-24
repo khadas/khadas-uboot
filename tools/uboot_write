@@ -1,0 +1,92 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= write amlogic uboot to DESTINATION block device or file
+
+UBOOT=
+DST=
+FORCE=
+NOOP=
+
+USAGE(){
+    echo "USAGE
+    uboot_write [-n|-f] uboot-file DESTINATION
+
+    uboot_write $UBOOT $DST
+
+"
+exit 2
+}
+
+FAIL(){
+    echo "[e] $@">&2
+    exit 1
+}
+
+CMD(){
+    echo "[#] $@">&2
+    [ "$NOOP" ] || \
+    "$@"
+}
+
+dd=dd
+
+
+[ "$1" ] || USAGE 
+
+for a in "$@"; do
+    case $a in
+    -n|--noop)
+    NOOP=NOOP
+    echo "[i] NOOP mode">&2
+    ;;
+    -f|--force)
+    FORCE=1
+    ;;
+    /dev/*)
+	[ -b "$a" ] || FAIL dst not block dev
+	DST=$a
+    ;;
+    *)
+    [ -f "$a" ] && {
+	[ "$UBOOT" ] || { 
+	UBOOT=$a
+	continue
+	}
+	[ "$DST" ] && FAIL dst defined already
+	DST="$a"
+	continue
+    }
+    USAGE
+    ;;
+    esac
+done
+
+sudo=sudo
+sudo=
+
+[ "$UBOOT" ] || FAIL uboot not defined
+[ "$DST" ] || FAIL destination not defined
+
+for d in /sys/class/block/${DST#/dev/}/device/model ; do
+    [ -f $d ] && DEVNAME=$d
+done
+
+echo "[i] wite u-boot $UBOOT > $DST ($DEVNAME)">&2
+
+grep "^$DST " /proc/mounts && FAIL write to mounted device 
+
+[ -b "$DST" ] && {
+[  "$FORCE" ] || {
+echo "[i] are u sure ? press any key or Ctrl+C for escape">&2
+read l
+}
+}
+
+echo "[i] write ...">&2
+
+CMD $sudo dd if=$UBOOT of=$DST conv=fsync,notrunc bs=444 count=1 || FAIL write 
+CMD $sudo dd if=$UBOOT of=$DST conv=fsync,notrunc bs=512 skip=1 seek=1 || FAIL write
+
+sync

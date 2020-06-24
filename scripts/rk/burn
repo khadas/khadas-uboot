@@ -1,0 +1,77 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= automate script wrapper for rkdeveloptool
+
+PD=$(dirname $0)
+PN=$(basename $0)
+PA=${PN#burn_}
+
+UP=/tmp/flash_boot.img
+RKP=$PD/../../../../utils/rk-flash-tool/tools
+
+#RK_BOOT=/tmp/khadas-uboot-build/u-boot-mainline/idbloader.img
+RK_BOOT=/tmp/u-boot.mmc.64.bin
+RK_ZERO=/tmp/zero
+
+#LOOP=
+
+for A in  $@; do
+case $A in
+    loop|--loop)
+    LOOP=1
+esac
+done
+
+while [ "1" ] ; do
+
+while [ "1" ] ; do
+$RKP/rkdeveloptool td && break
+$RKP/rkdeveloptool db $RKP/../bin/rk33/MiniLoaderAll.bin
+sleep 1
+done
+
+for A in $PA $@; do
+
+case $A in
+    test|td)
+    ;;
+    *clear)
+    dd if=/dev/zero bs=1M count=16 of=$RK_ZERO 1>/dev/null 2>/dev/null
+    $RKP/rkdeveloptool wl 0 $RK_ZERO || echo "[w] oops clear"
+    ;;
+    loader_legacy)
+    ;;
+    loader)
+    echo "[i] write LOADER"
+
+    $RKP/rkdeveloptool wl 64 $RK_BOOT || {
+	exit 1
+    }
+    $RKP/rkdeveloptool rd
+    ;;
+    reset|rd)
+    $RKP/rkdeveloptool rd
+    ;;
+    erase|ef)
+    echo "[i] ERASE flash"
+    $RKP/rkdeveloptool ef
+    ;;
+    read|rl)
+    echo "[i] READFLASH flash"
+
+    $RKP/rkdeveloptool rl 64 2000 $UP
+    ls -l1 $UP
+    ;;
+    *)
+    $RKP/rkdeveloptool --help
+    exit 1
+esac
+
+done
+
+    [ "$LOOP" ] || exit 
+    sleep 2
+
+done

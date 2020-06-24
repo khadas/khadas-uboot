@@ -1,0 +1,269 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make khadas uboot script wrapper
+
+PR=$(dirname $0)
+RP=$(realpath $PR)
+
+cd "$PR" || exit 1
+
+MSG(){
+    echo "[i] $@"
+}
+
+info_msg(){
+    echo "[i] $@"
+}
+
+CMD(){
+    echo "[#] $@">&2
+    "$@"
+}
+
+FAIL(){
+    echo "[e] $@">&2
+    exit 1
+}
+
+PATCHING(){
+[ -e "$BS/.ready.log" ] || {
+
+for P in $PKD/patches/$PKG_VERSION/*.patch; do
+    [ -f "$P" ] && {
+	PN=$(basename $P)
+	echo "[i] PATCH $PN"
+	patch -p1 -d"$BS" < "$P" || FAIL
+    }
+done
+
+echo READY > "$BS/.ready.log"
+
+}
+}
+
+BUILD_PKG(){
+PKG="$PKD/package.mk"
+
+echo "[i] build $PKG"
+
+make_host(){
+.
+}
+
+make_target(){
+.
+}
+
+make_target_deps(){
+.
+}
+
+post_make_target(){
+.
+}
+
+. $PKG
+
+./download \
+    "$PKG_URL" \
+    "$PKG_SOURCE_NAME" \
+    "$DOWNLOADS" || FAIL download uboot source
+
+BS="$BUILD/$PKG_SOURCE_DIR"
+
+[ -s "$BS" ] || { echo "[i] EXTRACT ... $BS"
+CMD tar -xf"$(realpath "$DOWNLOADS/$PKG_SOURCE_NAME")" -C"$BUILD" --one-top-level="$PKG_SOURCE_DIR"
+CMD ln -sf "$PKG_SOURCE_DIR" "$BUILD/$PKG_NAME"
+CMD ln -sf "$PKG_SOURCE_DIR" "$BUILD/$PKG_NAME-$PKG_VERSION"
+}
+
+PATCHING
+
+cd $BS
+
+make_host || echo "[w] make_host $PKD .. no ..."
+
+[ "$1" = "u-boot-mainline" ] || \
+make_target || echo "[w] make_target $PKD  ... no ..."
+
+cd -
+
+}
+
+#################################
+## BEGIN
+##
+
+echo "[i] make khadas uboot"
+
+. ./build.conf
+
+[ -d $DOWNLOADS ] || \
+    mkdir -p $DOWNLOADS
+
+[ -d "$BUILD" ] || \
+    mkdir -p "$BUILD"
+
+./download \
+    $DLBASE/$GCCZ \
+    $GCCZ \
+    $DOWNLOADS || FAIL download gcc
+
+[ -s "$BUILD/$GCC" ] || { echo "[i] EXTRACT ... $GCC"
+tar -xf"$(realpath "$DOWNLOADS/$GCCZ")"        -C"$BUILD" --one-top-level="$GCC" || FAIL 
+ln -sf $GCC $BUILD/gcc
+}
+
+[ "$ATF_BUILD" ] && {
+./download \
+    $DLBASE/$GCCZN \
+    $GCCZN \
+    $DOWNLOADS || FAIL download gcc
+
+[ -s "$BUILD/$GCCN" ] || { echo "[i] EXTRACT ... $GCCN"
+tar -xf"$(realpath "$DOWNLOADS/$GCCZN")"        -C"$BUILD" --one-top-level="$GCCN" || FAIL 
+ln -sf $GCCN $BUILD/gcc-none-eabi
+}
+}
+
+./download \
+    $DLBASE/$FIPZ \
+    $FIPZ \
+    $DOWNLOADS || FAIL download fip
+
+[ -s "$BUILD/$FIP" ] || { echo "[i] EXTRACT ... $FIP"
+tar -xf"$(realpath "$DOWNLOADS/$FIPZ")"        -C"$BUILD" --one-top-level="$FIP" || FAIL
+}
+
+
+[ "$1" = re ] && {
+    MSG REBUILD UBOOT
+    rm -rf $BUILD/u-boot-*
+    shift
+}
+
+export UBOOT_COMPILER_PATH=$(realpath "$BUILD/gcc")/bin
+export PATH="$(realpath "../opt/bin"):$EXTRA_PATH:$UBOOT_COMPILER_PATH:$PATH"
+export ARCH=arm64
+export CROSS_COMPILE=aarch64-none-linux-gnu-
+export UBOOT_COMPILER=$CROSS_COMPILE
+
+${CROSS_COMPILE}gcc --version || FAIL gcc
+
+#arm-none-eabi-gcc --version || FAIL $PATH gcc-none-eabi
+
+PKGS=u-boot-mainline
+
+[ "$ATF_BUILD" = 1 ] && PKGS="arm-trusted-firmware $PKGS"
+[ "$ATF_BUILD" = RKBIN ] && { 
+rm -rf $BUILD/arm-trusted-firmware*
+PKGS="rkbin $PKGS"
+}
+
+[ -s $BUILD/def_config ] && {
+[ "$DEF_CONFIG" ] ||  . $BUILD/def_config
+}
+[ "$DEF_CONFIG" ] || DEF_CONFIG=$DEF_CONFIG2
+[ "$DEF_CONFIG" ] && echo DEF_CONFIG=$DEF_CONFIG > $BUILD/def_config
+
+. ./make.inc
+
+echo "[i] VENDOR $VENDOR BOARD: $KHADAS_BOARD ($DEF_CONFIG)"
+
+[ "$KHADAS_BOARD" ] || FAIL board undefined
+
+for P in $PKGS; do
+    PKD=../packages/$P
+    BUILD_PKG $P
+done
+
+ln -sf $BUILD/$FIP ../packages/u-boot-mainline/fip || FAIL make symlink
+
+export UBOOT_DEFCONFIG=$DEF_CONFIG
+
+PKGS_DIR=$(realpath "$PKGS_DIR0")
+
+MANUAL=1
+
+[ "$1" = re ] && {
+    MSG REBUILD UBOOT
+    rm -rf $BUILD/u-boot-*
+    shift
+}
+
+[ "$MANUAL" ] && {
+echo "[i] manual build"
+
+cd "$BS"
+UBOOT_DIR="$PWD"
+make_target_deps
+cd -
+
+[ -s "$BS/.config" ] || make -C"$BS" $DEF_CONFIG
+make -C"$BS" $PJ $@ || FAIL make fail
+}
+
+(
+cd "$BS"
+UBOOT_DIR="$PWD"
+[ "$MANUAL" ] || \
+make_target
+post_make_target
+)
+
+echo "[i] $BOARD build complited"
+
+for D in $UBOOT_DIR1 $UBOOT_DIR2; do
+    [ -d "$D" ] || mkdir -p $D
+done
+
+CMP_=gz
+CMP="gzip -c9"
+
+case $VENDOR in
+    Rockchip)
+    echo "[i] $BOARD store"
+    cp $BS/u-boot.spi* $UBOOT_DIR1
+    cp $BS/u-boot.mmc* $UBOOT_DIR1
+    cp $BS/u-boot.sd* $UBOOT_DIR1
+    cp $BS/u-boot.mmc.64.bin		$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC
+    cp $BS/u-boot.spi.bin		$UBOOT_DIR2/$BOARD.$UBOOT_SPI
+    cp $BS/u-boot.sd.bin		$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0
+
+    ;;
+
+    *)
+    echo "[i] $BOARD store"
+    CMD cp $BS/fip/u-boot.bin		$UBOOT_DIR1/$UBOOT_SPI
+    CMD cp $BS/fip/u-boot.bin.sd.bin	$UBOOT_DIR1/$UBOOT_SD_MMC0
+    CMD cp $BS/fip/u-boot.bin		$UBOOT_DIR2/$BOARD.$UBOOT_SPI
+    CMD cp $BS/fip/u-boot.bin.sd.bin	$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0
+
+    [ "" ] && {
+    U="$UBOOT_DIR1/$BOARD.$UBOOT_SPI"
+    [ -e "$U" ] && rm "$U"
+    ln -sf "$BS/fip/u-boot.bin"		"$U"
+    U="$UBOOT_DIR1/$BOARD.$UBOOT_SD_MMC0"
+    [ -e "$U" ] && rm "$U"
+    ln -sf "$BS/fip/u-boot.bin.sd.bin"	"$U"
+    }
+
+
+    [ "$COMPRESS" ] && {
+    for C in \
+    $UBOOT_DIR1/$BOARD.$UBOOT_SPI $UBOOT_DIR1/$BOARD.$UBOOT_SD_MMC0 \
+    $UBOOT_DIR2/$BOARD.$UBOOT_SPI $UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0 \
+    ; do
+	[ -e "$C.$CMP_" ] && rm $C.$CMP_
+	echo "$CMP $C > $C.$CMP_"
+	$CMP $C > $C.$CMP_
+    done
+    }
+    ;;
+
+esac
+
+echo "[i] $BOARD ready"
+exit 0

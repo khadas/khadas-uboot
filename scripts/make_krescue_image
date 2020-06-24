@@ -1,0 +1,38 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make kresq image
+
+PR=$(dirname $0)
+RP=$(realpath $PR)
+
+cd "$PR" || exit 1
+
+. ./build.conf
+
+[ "$BOARDS" ] || BOARDS="$@"
+[ "$BOARDS" ] || \
+BOARDS="VIM1 VIM2 VIM3 VIM3L Edge"
+
+DATE=$(tz= date)
+LABEL="UBOOT"
+NAME="Khadas.$LABEL.mainline"
+
+./download $MAKE_IMAGE_URL "" $DOWNLOADS #
+
+for x in $DOWNLOADS/make_image; do
+    [ -s $x ] || continue
+    [ -x $x ] || chmod 0777 $x
+    make_image=$(realpath "$x")
+done
+
+[ "$make_image" ] || FAIL make_image not found
+
+KRESQ_CONF=/tmp/krescue.$LABEL.image.conf
+. ./krescue.image.conf.tpl > $KRESQ_CONF
+
+cd $UBOOT_DIR2
+
+OUT=$UBOOT_DIR2 \
+    $make_image $KRESQ_CONF

@@ -1,0 +1,109 @@
+From ba619ed73a6232b808427da0a45f4e37f67f5816 Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Wed, 20 May 2020 13:06:41 +0900
+Subject: [PATCH] edge_fit_generator
+
+---
+ board/khadas/edge_rk3399/fit_spl_atf.sh | 79 +++++++++++++++++++++++++
+ 1 file changed, 79 insertions(+)
+ create mode 100755 board/khadas/edge_rk3399/fit_spl_atf.sh
+
+diff --git a/board/khadas/edge_rk3399/fit_spl_atf.sh b/board/khadas/edge_rk3399/fit_spl_atf.sh
+new file mode 100755
+index 00000000..1dbfe5cc
+--- /dev/null
++++ b/board/khadas/edge_rk3399/fit_spl_atf.sh
+@@ -0,0 +1,88 @@
++#!/bin/sh
++
++## hyphop ##
++
++CMP=lzo
++CMP=none
++UBOOT=u-boot-nodtb.bin
++UBOOT_CMP=$UBOOT
++[ "$CMP" = "none" ] || {
++UBOOT_CMP=$UBOOT.$CMP
++lzop -c9 $UBOOT > $UBOOT_CMP
++}
++echo "[i] $0 : $@ ($CMP)">&2
++ls -l1 $UBOOT* 1>&2
++
++cat << END
++/dts-v1/;
++
++/ {
++	description = "FIT image for U-Boot with bl31 (TF-A)";
++	#address-cells = <1>;
++
++	images {
++
++		uboot {
++			description = "U-Boot (64-bit)";
++			data = /incbin/("$UBOOT_CMP");
++			type = "standalone";
++			os = "U-Boot";
++			arch = "arm64";
++			compression = "$CMP";
++			load = <0x00200000>;
++		};
++		/*
++		atf_1 {
++			description = "ARM Trusted Firmware";
++			data = /incbin/("bl31_0x00040000.bin");
++			type = "firmware";
++			arch = "arm64";
++			os = "arm-trusted-firmware";
++			compression = "none";
++			load = <0x00040000>;
++			entry = <0x00040000>;
++		};
++
++		atf_2 {
++			description = "ARM Trusted Firmware";
++			data = /incbin/("bl31_0xff3b0000.bin");
++			type = "firmware";
++			arch = "arm64";
++			os = "arm-trusted-firmware";
++			compression = "none";
++			load = <0xff3b0000>;
++		};
++
++		atf_3 {
++			description = "ARM Trusted Firmware";
++			data = /incbin/("bl31_0xff8c0000.bin");
++			type = "firmware";
++			arch = "arm64";
++			os = "arm-trusted-firmware";
++			compression = "none";
++			load = <0xff8c0000>;
++		};
++		*/
++
++		fdt_1 {
++			description = "rk3399-khadas-edge-x.dtb";
++			data = /incbin/("u-boot.dtb");
++			type = "flat_dt";
++			compression = "none";
++		};
++
++	};
++
++	configurations {
++		default = "config_1";
++		config_1 {
++			description = "rk3399-khadas-edge";
++			//firmware = "atf_1";
++			//loadables = "uboot","atf_2","atf_3";
++			loadables = "uboot";
++			fdt = "fdt_1";
++		};
++
++	};
++
++};
++
++END
+-- 
+2.17.1
+

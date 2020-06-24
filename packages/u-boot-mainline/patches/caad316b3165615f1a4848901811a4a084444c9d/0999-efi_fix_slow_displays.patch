@@ -1,0 +1,38 @@
+From 7da5c3b7a4d149d1dab1dd4b199bc8389ae250b5 Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Tue, 23 Jun 2020 13:16:06 +0900
+Subject: [PATCH] efi_fix_slow_displays
+
+ABOUT freebsd boot up very slow with usb keyboard and video output
+
+HACK speed up EFI bootup / clean stdin stdout stderr before boot efi
+and restore if boot faulted
+
+---
+ include/config_distro_bootcmd.h | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/include/config_distro_bootcmd.h b/include/config_distro_bootcmd.h
+index a312de5e..b7ae7d81 100644
+--- a/include/config_distro_bootcmd.h
++++ b/include/config_distro_bootcmd.h
+@@ -131,11 +131,15 @@
+ 		"fi;"                                                     \
+ 		"load ${devtype} ${devnum}:${distro_bootpart} "           \
+ 			"${kernel_addr_r} efi/boot/"BOOTEFI_NAME"; "      \
++	"in=$stdin; out=$stdout; err=$stderr; echo EFI SLOW plz wait ...;"\
++	"setenv stdin serial;setenv stdout serial; setenv stderr serial; "\
+ 		"if fdt addr ${fdt_addr_r}; then "                        \
+ 			"bootefi ${kernel_addr_r} ${fdt_addr_r};"         \
+ 		"else "                                                   \
+ 			"bootefi ${kernel_addr_r} ${fdtcontroladdr};"     \
+-		"fi\0"                                                    \
++		"fi; "                                                    \
++	"setenv stdin $in;setenv stdout $out; setenv stderr $err; "       \
++		" \0"                                                     \
+ 	\
+ 	"load_efi_dtb="                                                   \
+ 		"load ${devtype} ${devnum}:${distro_bootpart} "           \
+-- 
+2.17.1
+

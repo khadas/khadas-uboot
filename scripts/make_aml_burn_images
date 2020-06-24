@@ -1,0 +1,52 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make aml-burn-images VIM1 VIM2 VIM3 VIM3L
+
+PR=$(dirname $0)
+RP=$(realpath $PR)
+
+cd "$PR" || exit 1
+
+. ./build.conf
+
+[ "$BOARDS" ] || BOARDS="$@"
+[ "$BOARDS" ] || \
+BOARDS="VIM1 VIM2 VIM3 VIM3L"
+
+AML_PACKER="$BUILD/aml_image_v2_packer"
+
+    ./download \
+    "$DLBASE/aml_image_v2_packer.gz" \
+    aml_image_v2_packer.gz \
+    "$DOWNLOADS" || FAIL download aml_image_v2_packer.gz
+
+    gzip -dc "$DOWNLOADS/aml_image_v2_packer.gz" > "$AML_PACKER"
+    chmod 0777 $AML_PACKER
+    
+    $AML_PACKER 2>&1 | grep -q 2.6.1 || {
+    echo "[e] $AML_PACKER not works"
+    exit 1
+    }
+
+for BOARD in $BOARDS ; do
+
+    UBOOT="$UBOOT_DIR2/$BOARD.$UBOOT_SPI"
+
+    [ -s $UBOOT ] && {
+    echo "[i] generate AML_BURN_IMAGE $B"
+    AML=$BOARD.uboot-mainline.emmc.aml.img
+    ./download \
+    $DLBASE/$AML \
+    $AML \
+    $DOWNLOADS || FAIL download $AML
+
+    
+    OUT="$UBOOT_DIR2/${AML%.*}"
+    [ -d "$OUT" ] || mkdir -p "$OUT"
+    $AML_PACKER -d "$DOWNLOADS/$AML" "$OUT"
+    cp "$UBOOT" "$OUT/bootloader.PARTITION"
+    $AML_PACKER -r "$OUT/image.cfg" "$OUT" "$UBOOT_DIR2/$AML" && rm -rf "$OUT"
+    }
+done

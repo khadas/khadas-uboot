@@ -1,0 +1,58 @@
+kedge# dhcp test && script
+Speed: 1000, full duplex
+BOOTP broadcast 1
+DHCP client bound to address 172.23.10.104 (3 ms)
+Using ethernet@fe300000 device
+TFTP from server 172.23.10.1; our IP address is 172.23.10.104
+Filename 'test'.
+Load address: 0x1000000
+Loading: #
+         445.3 KiB/s
+done
+Bytes transferred = 456 (1c8 hex)
+## mkimage Script run a:01000000 l:384
+dns peace loadhost
+Speed: 1000, full duplex
+172.23.10.140
+dhcp 0x01000000 172.23.10.140:boot.test.cmd && script
+Speed: 1000, full duplex
+BOOTP broadcast 1
+DHCP client bound to address 172.23.10.104 (3 ms)
+Using ethernet@fe300000 device
+TFTP from server 172.23.10.140; our IP address is 172.23.10.104
+Filename 'boot.test.cmd'.
+Load address: 0x20000000
+Loading: #
+done
+Bytes transferred = 1218 (4c2 hex)
+## Script run a:20000000 l:1218 c:0
+=====================================
+TFTP_DHCP_TEST peace => 172.23.10.140
+=====================================
+rockchip/rk3399-khadas-edge-v.dtb
+=====================================
+BOARD: EDGEv
+=====================================
+uboot test UPDATE by write to sd <= u-boot.itb
+Speed: 1000, full duplex
+BOOTP broadcast 1
+DHCP client bound to address 172.23.10.104 (2 ms)
+Using ethernet@fe300000 device
+TFTP from server 172.23.10.140; our IP address is 172.23.10.104
+Filename 'u-boot.itb'.
+Load address: 0x40000000
+Loading: #######################################################
+         14 MiB/s
+done
+Bytes transferred = 792872 (c1928 hex)
+SD UPDATE
+CHECK u-boot.itb c1928
+md5 for 40000000 ... 400c1927 ==> bf1c20388c2324429fde28b5382592d9
+switch to partitions #0, OK
+mmc1 is current device
+mmc write 0x40000000 4000 800
+
+MMC write: dev # 1, block # 16384, count 2048 ... 2048 blocks written: OK
+BOOT_DHCP_END
+kedge# 
+

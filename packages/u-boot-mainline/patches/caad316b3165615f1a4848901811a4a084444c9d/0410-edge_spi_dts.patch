@@ -1,0 +1,53 @@
+From d6bb90dea19846eaf4e29851003d09762e70abf2 Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Tue, 12 May 2020 19:27:43 +0900
+Subject: [PATCH] edge_spi_dts
+
+add missed places for dts SPI NOR FLASH for EDGE 
+---
+ arch/arm/dts/rk3399-khadas-edge-u-boot.dtsi | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/arch/arm/dts/rk3399-khadas-edge-u-boot.dtsi b/arch/arm/dts/rk3399-khadas-edge-u-boot.dtsi
+index a7039d74..21d3b0df 100644
+--- a/arch/arm/dts/rk3399-khadas-edge-u-boot.dtsi
++++ b/arch/arm/dts/rk3399-khadas-edge-u-boot.dtsi
+@@ -10,8 +10,33 @@
+ 	chosen {
+-		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc;
+-	};
++		u-boot,spl-boot-order = "same-as-spl", &spiflash, &sdhci, &sdmmc;
++	};
++
++       config {
++               u-boot,spl-payload-offset = <0x40000>; /* @ 256KB */
++               //u-boot,mmc-env-offset = <0x4000>;      /* @  16KB */
++               //u-boot,efi-partition-entries-offset = <0x200000>; /* 2MB */
++               //u-boot,boot-led = "module_led";
++               //sysreset-gpio = <&gpio1 RK_PA6 GPIO_ACTIVE_HIGH>;
++       };
++	
++	aliases {
++	    spi0 = &spi1;
++	};
++	
+ };
+ 
+ &vdd_log {
+ 	regulator-init-microvolt = <950000>;
+ };
++
++&spi1 {
++    max-freq = <104000000>;
++    status = "okay";
++
++    spiflash: flash@0 {
++	u-boot,dm-pre-reloc;
++	compatible = "winbond,w25q128fw", "jedec,spi-nor";
++	reg = <0>;
++	spi-max-frequency = <104000000>;
++    };
++};
+-- 
+2.17.1
+

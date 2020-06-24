@@ -1,0 +1,72 @@
+From 5f0b787be31a7c12a4d89bbcaffc1e26711dfbc9 Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Thu, 21 May 2020 13:15:14 +0900
+Subject: [PATCH] edge_extra_info_spl_atf
+
+---
+ common/spl/spl_atf.c |  2 +-
+ common/spl/spl_fit.c | 10 +++++-----
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/common/spl/spl_atf.c b/common/spl/spl_atf.c
+index 702367b2..16bf14b2 100644
+--- a/common/spl/spl_atf.c
++++ b/common/spl/spl_atf.c
+@@ -134,7 +134,7 @@ uintptr_t spl_fit_images_get_entry(void *blob, int node)
+ 	if (val == FDT_ERROR)
+ 		val = fdt_getprop_u32(blob, node, "load-addr");
+ 
+-	debug("%s: entry point 0x%lx\n", __func__, val);
++	printf("%s: entry point 0x%lx\n", __func__, val);
+ 	return val;
+ }
+ 
+diff --git a/common/spl/spl_fit.c b/common/spl/spl_fit.c
+index 69dabd27..84aba267 100644
+--- a/common/spl/spl_fit.c
++++ b/common/spl/spl_fit.c
+@@ -168,7 +168,7 @@ static int spl_fit_get_image_node(const void *fit, int images,
+ 	if (err)
+ 		return err;
+ 
+-	debug("%s: '%s'\n", type, str);
++	printf("FIT: %s: '%s'\n", type, str);
+ 
+ 	node = fdt_subnode_offset(fit, images, str);
+ 	if (node < 0) {
+@@ -256,12 +256,12 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
+ 		if (fit_image_get_type(fit, node, &type))
+ 			puts("Cannot get image type.\n");
+ 		else
+-			debug("%s ", genimg_get_type_name(type));
++			printf("FIT: %s ", genimg_get_type_name(type));
+ 	}
+ 
+ 	if (IS_ENABLED(CONFIG_SPL_GZIP)) {
+ 		fit_image_get_comp(fit, node, &image_comp);
+-		debug("%s ", genimg_get_comp_name(image_comp));
++		printf("%s ", genimg_get_comp_name(image_comp));
+ 	}
+ 
+ 	if (fit_image_get_load(fit, node, &load_addr))
+@@ -290,7 +290,7 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
+ 			       nr_sectors, (void *)load_ptr) != nr_sectors)
+ 			return -EIO;
+ 
+-		debug("External data: dst=%lx, offset=%x, size=%lx\n",
++		printf("External data: dst=%lx, offset=%x, size=%lx\n",
+ 		      load_ptr, offset, (unsigned long)length);
+ 		src = (void *)load_ptr + overhead;
+ 	} else {
+@@ -299,7 +299,7 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
+ 			puts("Cannot get image data/size\n");
+ 			return -ENOENT;
+ 		}
+-		debug("Embedded data: dst=%lx, size=%lx\n", load_addr,
++		printf("Embedded data: dst=%lx, size=%lx\n", load_addr,
+ 		      (unsigned long)length);
+ 		src = (void *)data;
+ 	}
+-- 
+2.17.1
+

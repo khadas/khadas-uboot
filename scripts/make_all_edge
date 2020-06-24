@@ -1,0 +1,7 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make EDGE 
+
+${0%_*} khadas-edge-v-rk3399

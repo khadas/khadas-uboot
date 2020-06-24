@@ -1,0 +1,34 @@
+From 2edd9c888223de598b03758a1eccfa5ce1912c6d Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Sat, 23 May 2020 17:32:35 +0900
+Subject: [PATCH] edge_mem_fix
+
+---
+ include/configs/rk3399_common.h | 6 +++---
+
+--- a/include/configs/rk3399_common.h
++++ b/include/configs/rk3399_common.h
+@@ -32,7 +32,7 @@
+ #define CONFIG_SPL_BSS_MAX_SIZE         0x10000
+ #endif
+ 
+-#define CONFIG_SYS_BOOTM_LEN	(64 << 20)	/* 64M */
++#define CONFIG_SYS_BOOTM_LEN	(64 << 21)	/* 128M */
+ 
+ /* MMC/SD IP block */
+ #define CONFIG_ROCKCHIP_SDHCI_MAX_FREQ	200000000
+@@ -49,9 +49,9 @@
+ #define ENV_MEM_LAYOUT_SETTINGS \
+ 	"scriptaddr=0x00500000\0" \
+ 	"pxefile_addr_r=0x00600000\0" \
+-	"fdt_addr_r=0x01f00000\0" \
++	"fdt_addr_r=0x00f00000\0" \
+ 	"kernel_addr_r=0x02080000\0" \
+-	"ramdisk_addr_r=0x06000000\0"
++	"ramdisk_addr_r=0x20000000\0"
+ 
+ #ifndef ROCKCHIP_DEVICE_SETTINGS
+ #define ROCKCHIP_DEVICE_SETTINGS
+-- 
+2.17.1
+

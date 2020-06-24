@@ -1,0 +1,4 @@
+language: c
+dist: bionic
+#before_install: sudo apt-get install autopoint
+script:  scripts/prepare && scripts/make_all

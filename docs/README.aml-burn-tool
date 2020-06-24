@@ -1,0 +1,18 @@
+# mainline uboot
+
+=> mmc erase 0 666
+
+MMC erase: dev # 2, block # 0, count 1638 ... 
+
+Caution! Your devices Erase group is 0x400
+The erase range would be change to 0x0~0x7ff
+
+1638 blocks erased: OK
+=> reset
+resetting ...
+bl31 reboot reason: 0xd
+bl31 reboot reason: 0x0
+system cmd  1.
+GXL:BL1:9ac50e:a1974b;FEAT:ADFC318C;POC:3;RCY:0;EMMC:0;READ:0;CHK:AA;SD:800;USB:8;
+
+

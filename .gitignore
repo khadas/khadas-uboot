@@ -1,0 +1,12 @@
+!.gitignore
+/bin
+/build
+/work
+/dl
+fip
+/share
+*.bin
+*.elf
+/opt
+
+!README.md

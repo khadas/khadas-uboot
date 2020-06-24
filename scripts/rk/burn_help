@@ -1,0 +1,10 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= rkdeveloptool help
+
+RKP=../../../../utils/rk-flash-tool/tools
+
+$RKP/rkdeveloptool --help
+

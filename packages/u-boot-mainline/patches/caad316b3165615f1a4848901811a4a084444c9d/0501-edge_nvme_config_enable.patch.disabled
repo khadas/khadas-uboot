@@ -1,0 +1,62 @@
+From 700fa488dc88104b8dd3565211028c027acd8f35 Mon Sep 17 00:00:00 2001
+From: hyphop <art@khadas.com>
+Date: Fri, 15 May 2020 21:28:43 +0900
+Subject: [PATCH] edge_nvme_config_enable
+
+---
+ configs/khadas-edge-captain-rk3399_defconfig | 5 +++++
+ configs/khadas-edge-rk3399_defconfig         | 5 +++++
+ configs/khadas-edge-v-rk3399_defconfig       | 5 +++++
+ 3 files changed, 15 insertions(+)
+
+diff --git a/configs/khadas-edge-captain-rk3399_defconfig b/configs/khadas-edge-captain-rk3399_defconfig
+index 1f433393..b1879451 100644
+--- a/configs/khadas-edge-captain-rk3399_defconfig
++++ b/configs/khadas-edge-captain-rk3399_defconfig
+@@ -42,6 +42,11 @@ CONFIG_SYS_I2C_ROCKCHIP=y
+ CONFIG_MMC_DW=y
+ CONFIG_MMC_DW_ROCKCHIP=y
+ CONFIG_MMC_SDHCI=y
++CONFIG_NVME=y
++CONFIG_PCI=y
++CONFIG_CMD_PCI=y
++CONFIG_DM_RESET=y
++CONFIG_MISC_INIT_R=y
+ CONFIG_MMC_SDHCI_ROCKCHIP=y
+ CONFIG_PHY_REALTEK=y
+ CONFIG_DM_ETH=y
+diff --git a/configs/khadas-edge-rk3399_defconfig b/configs/khadas-edge-rk3399_defconfig
+index 25649bb7..e6ef8aaf 100644
+--- a/configs/khadas-edge-rk3399_defconfig
++++ b/configs/khadas-edge-rk3399_defconfig
+@@ -40,6 +40,11 @@ CONFIG_SYS_I2C_ROCKCHIP=y
+ CONFIG_MMC_DW=y
+ CONFIG_MMC_DW_ROCKCHIP=y
+ CONFIG_MMC_SDHCI=y
++CONFIG_NVME=y
++CONFIG_PCI=y
++CONFIG_CMD_PCI=y
++CONFIG_DM_RESET=y
++CONFIG_MISC_INIT_R=y
+ CONFIG_MMC_SDHCI_ROCKCHIP=y
+ CONFIG_PHY_REALTEK=y
+ CONFIG_DM_ETH=y
+diff --git a/configs/khadas-edge-v-rk3399_defconfig b/configs/khadas-edge-v-rk3399_defconfig
+index 9509c812..64d90c47 100644
+--- a/configs/khadas-edge-v-rk3399_defconfig
++++ b/configs/khadas-edge-v-rk3399_defconfig
+@@ -41,6 +41,11 @@ CONFIG_SYS_I2C_ROCKCHIP=y
+ CONFIG_MMC_DW=y
+ CONFIG_MMC_DW_ROCKCHIP=y
+ CONFIG_MMC_SDHCI=y
++CONFIG_NVME=y
++CONFIG_PCI=y
++CONFIG_CMD_PCI=y
++#CONFIG_DM_RESET=y
++#CONFIG_MISC_INIT_R=y
+ CONFIG_MMC_SDHCI_ROCKCHIP=y
+ CONFIG_PHY_REALTEK=y
+ CONFIG_DM_ETH=y
+-- 
+2.17.1
+
