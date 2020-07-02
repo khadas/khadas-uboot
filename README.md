@@ -90,4 +90,4 @@ EDGE status
 + https://github.com/krescue/khadas-linux-kernel
 + https://github.com/krescue/khadas-uboot
 
-    ## hyphop ##
+    \## hyphop ##
