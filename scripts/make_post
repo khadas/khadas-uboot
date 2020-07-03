@@ -131,14 +131,14 @@ echo "
 ## DOWNLOADS
 
 + https://dl.khadas.com/Firmware/uboot/main-line/
-+ https://github.com/hyphop/khadas-uboot/releases/tag/last
++ https://github.com/$OWN_REPO/khadas-uboot/releases/tag/last
 
 ## LINKS
 
 + https://docs.khadas.com/
 + https://forum.khadas.com/
-+ https://github.com/khadas/
-+ https://github.com/hyphop/khadas-uboot
++ https://github.com/$OWN_REPO
++ https://github.com/$OWN_REPO/khadas-uboot
 + https://dl.khadas.com/Firmware/Krescue/
 "
 
