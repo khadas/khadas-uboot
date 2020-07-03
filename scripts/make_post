@@ -11,6 +11,8 @@ cd "$PR" || exit 1
 
 . ./build.conf
 
+CODE='```'
+
 (
 cd $UBOOT_DIR2
 md5sum *.bin > list.md5sum
@@ -36,10 +38,11 @@ for s in VIM*sd.bin; do
 done
 
 cat <<END
-
-    \# write to sd / emmc - example
+$CODE
+    # write to sd / emmc - example
     dd if=$s of=/dev/mmcblk? conv=fsync,notrunc bs=442 count=1
     dd if=$s of=/dev/mmcblk? conv=fsync,notrunc bs=512 skip=1 seek=1
+$CODE
 
 !NOTE: same can be writed by 0 offset to sd / mmc ( cat VIM?.u-boot.sd.bin > /dev/mmcblk? ) 
 !NOTE: but partition table will be rewrited missed ( by 442 offset ) and need created it
@@ -66,9 +69,10 @@ done
 
 [ -e "$s" ] && \
 cat <<END
-
-    \# write to sd / emmc - example
+$CODE
+    # write to sd / emmc - example
     dd if=$s of=/dev/mmcblk? conv=fsync,notrunc seek=64
+$CODE
 
 !NOTE: write to 64*512 bytes offset
 END
@@ -80,11 +84,12 @@ done
 
     [ -e "$s" ] && \
 cat <<END
-
-    \# write to sd / emmc - example
+$CODE
+    # write to sd / emmc - example
     dd if=$s of=/dev/mmcblk? conv=fsync,notrunc skip=64 seek=64
-    \# or just from begin and rewrite mbr
+    # or just from begin and rewrite mbr
     dd if=$s of=/dev/mmcblk? conv=fsync,notrunc
+$CODE
 
 !NOTE: write to 0 offset
 END
@@ -110,11 +115,13 @@ for s in VIM*aml.img; do
     echo "+ $s"
 done
 
-echo <<END
+cat <<END
 !NOTE: emmc mainline uboot images for burn via aml-burn-tool software
 
-    \# burn example
+$CODE
+    # burn example
     aml-burn-tool -b VIM? -i VIM?.uboot-mainline.emmc.aml.img
+$CODE
 
 END
 
