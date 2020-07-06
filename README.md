@@ -82,7 +82,7 @@ EDGE status
 
 ## related projects
 
-+ https://github.com/krescue/khadas-rescue
++ https://github.com/krescue/krescue
 + https://github.com/krescue/khadas-rescue-sdk
 + https://github.com/krescue/khadas-rescue-rootfs
 + https://github.com/krescue/khadas-openwrt-feed-extra
@@ -90,4 +90,4 @@ EDGE status
 + https://github.com/krescue/khadas-linux-kernel
 + https://github.com/krescue/khadas-uboot
 
-    \## hyphop ##
+\## hyphop ##

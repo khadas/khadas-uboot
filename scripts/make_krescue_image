@@ -16,8 +16,11 @@ cd "$PR" || exit 1
 BOARDS="VIM1 VIM2 VIM3 VIM3L Edge"
 
 DATE=$(tz= date)
-LABEL="UBOOT"
-NAME="Khadas.$LABEL.mainline"
+
+KLABEL="UBOOT"
+klabel="uboot"
+
+NAME="Khadas.$KLABEL.mainline"
 
 ./download $MAKE_IMAGE_URL "" $DOWNLOADS #
 
@@ -29,7 +32,7 @@ done
 
 [ "$make_image" ] || FAIL make_image not found
 
-KRESQ_CONF=/tmp/krescue.$LABEL.image.conf
+KRESQ_CONF=/tmp/krescue.$KLABEL.image.conf
 . ./krescue.image.conf.tpl > $KRESQ_CONF
 
 cd $UBOOT_DIR2

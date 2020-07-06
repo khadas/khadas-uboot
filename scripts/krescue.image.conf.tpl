@@ -19,7 +19,7 @@ format:		kresq
 builder:	hyphop
 date:		$DATE
 link:		http://dl.khadas.com/Firmware
-label:		$LABEL
+label:		$KLABEL
 match:		BOARD=VIM3L
 match:		BOARD=VIM3
 match:		BOARD=VIM2
