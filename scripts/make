@@ -204,7 +204,28 @@ UBOOT_DIR="$PWD"
 make_target_deps
 cd -
 
-[ -s "$BS/.config" ] || make -C"$BS" $DEF_CONFIG
+#[ -s "$BS/.config" ] || make -C"$BS" $DEF_CONFIG
+
+ -s "$BS/.config" ] || {
+make -C"$BS" $DEF_CONFIG
+
+echo '
+
+CONFIG_AUTOBOOT=y
+CONFIG_AUTOBOOT_KEYED=y
+CONFIG_AUTOBOOT_PROMPT="Hit SPACE in %d seconds to stop autoboot"
+# CONFIG_AUTOBOOT_ENCRYPTION is not set
+CONFIG_AUTOBOOT_DELAY_STR="2"
+CONFIG_AUTOBOOT_STOP_STR=" "
+# CONFIG_AUTOBOOT_KEYED_CTRLC is not set
+
+' >> "$BS/.config"
+
+#exit 0
+
+}
+
+
 make -C"$BS" $PJ $@ || FAIL make fail
 }
 
