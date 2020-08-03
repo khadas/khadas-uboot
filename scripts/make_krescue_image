@@ -32,7 +32,10 @@ done
 
 [ "$make_image" ] || FAIL make_image not found
 
-KRESQ_CONF=/tmp/krescue.$KLABEL.image.conf
+# config name must start from .
+# for CONFIG in $MNT/.*.image.conf $MNT/.meta/.*.image.conf ""; do
+
+KRESQ_CONF=/tmp/.krescue.$KLABEL.image.conf
 . ./krescue.image.conf.tpl > $KRESQ_CONF
 
 cd $UBOOT_DIR2
