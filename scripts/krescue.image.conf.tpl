@@ -40,5 +40,13 @@ start:  0
 sub:	1
 data:   %%BOARD%%.u-boot.sd.bin
 
+## partition + fs block
+part:	1
+type:	
+start:	32M
+size:	512M
+fstype:	vfat
+label:	boot
+
 ##END##
 end
