@@ -1,0 +1,25 @@
+From 3e85b617fe93ff76aa18ea5fbb7e9b332ad7d261 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 20 Oct 2020 11:54:45 +0800
+Subject: [PATCH] saradc-test
+
+---
+ drivers/adc/meson-saradc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/adc/meson-saradc.c b/drivers/adc/meson-saradc.c
+index f7c919d3..b22d7cf4 100644
+--- a/drivers/adc/meson-saradc.c
++++ b/drivers/adc/meson-saradc.c
+@@ -709,6 +709,8 @@ static const struct udevice_id meson_saradc_ids[] = {
+ 	  .data = (ulong)&gxl_saradc_data },
+ 	{ .compatible = "amlogic,meson-gxm-saradc",
+ 	  .data = (ulong)&gxl_saradc_data },
++	{ .compatible = "amlogic,meson-g12a-saradc",
++	  .data = (ulong)&gxl_saradc_data },
+ 	{ }
+ };
+ 
+-- 
+2.25.1
+

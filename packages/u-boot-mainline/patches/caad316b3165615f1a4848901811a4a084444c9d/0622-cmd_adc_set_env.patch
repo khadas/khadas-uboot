@@ -1,0 +1,40 @@
+From 588d8009a3275f7815d0433053f5999c1070f3da Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 20 Oct 2020 16:59:32 +0800
+Subject: [PATCH] cmd_adc_set_env
+
+---
+ cmd/adc.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/cmd/adc.c b/cmd/adc.c
+index 381961cf..b53433f4 100644
+--- a/cmd/adc.c
++++ b/cmd/adc.c
+@@ -22,7 +22,7 @@ static int do_adc_list(cmd_tbl_t *cmdtp, int flag, int argc,
+ 
+ 	do {
+ 		printf("- %s\n", dev->name);
+-
++		env_set("adc_dev", dev->name);
+ 		ret = uclass_next_device(&dev);
+ 		if (ret)
+ 			return CMD_RET_FAILURE;
+@@ -87,10 +87,12 @@ static int do_adc_single(cmd_tbl_t *cmdtp, int flag, int argc,
+ 	}
+ 
+ 	ret = uclass_get_device_by_name(UCLASS_ADC, argv[1], &dev);
+-	if (!ret && !adc_raw_to_uV(dev, data, &uV))
++	if (!ret && !adc_raw_to_uV(dev, data, &uV)) {
+ 		printf("%u, %d uV\n", data, uV);
+-	else
++	} else {
+ 		printf("%u\n", data);
++		env_set_hex("adc_value", data);
++	}
+ 
+ 	return CMD_RET_SUCCESS;
+ }
+-- 
+2.25.1
+
