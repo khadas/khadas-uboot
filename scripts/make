@@ -43,6 +43,10 @@ echo READY > "$BS/.ready.log"
 }
 }
 
+build_package(){
+echo "[i] DUMMY build_package $@">&2
+}
+
 BUILD_PKG(){
 PKG="$PKD/package.mk"
 
@@ -188,7 +192,7 @@ export UBOOT_DEFCONFIG=$DEF_CONFIG
 
 PKGS_DIR=$(realpath "$PKGS_DIR0")
 
-MANUAL=1
+#MANUAL=1
 
 [ "$1" = re ] && {
     MSG REBUILD UBOOT
@@ -196,8 +200,8 @@ MANUAL=1
     shift
 }
 
-[ "$MANUAL" ] && {
-echo "[i] manual build"
+[ "$MANUAL" ] || {
+echo "[i] auto build"
 
 cd "$BS"
 UBOOT_DIR="$PWD"
@@ -206,7 +210,7 @@ cd -
 
 #[ -s "$BS/.config" ] || make -C"$BS" $DEF_CONFIG
 
- -s "$BS/.config" ] || {
+[ -s "$BS/.config" ] || {
 make -C"$BS" $DEF_CONFIG
 
 echo '
@@ -218,21 +222,26 @@ CONFIG_AUTOBOOT_PROMPT="Hit SPACE in %d seconds to stop autoboot"
 CONFIG_AUTOBOOT_DELAY_STR="2"
 CONFIG_AUTOBOOT_STOP_STR=" "
 CONFIG_AUTOBOOT_KEYED_CTRLC=y
-
 ' >> "$BS/.config"
 
-#exit 0
+# CONFIG_SARADC_MESON=y
+
+}
+
+make -C"$BS" $PJ $@ || FAIL make fail
 
 }
 
 
-make -C"$BS" $PJ $@ || FAIL make fail
+[ "$MANUAL" = "dev" ] && {
+    MANUAL=
+    make -C"$BS" $PJ $@ || FAIL make fail
 }
 
 (
 cd "$BS"
 UBOOT_DIR="$PWD"
-[ "$MANUAL" ] || \
+[ "$MANUAL" ] && \
 make_target
 post_make_target
 )
