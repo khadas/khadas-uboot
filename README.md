@@ -27,7 +27,7 @@ mainline u-boot for Khadas VIM and EDGE sbc series
 ## install & usage
 
 ```
-git clone https://github.com/krescue/khadas-uboot
+git clone https://github.com/khadas/khadas-uboot
 cd khadas-uboot
 ./scripts/prepare
 ./scripts/make
@@ -87,12 +87,12 @@ EDGE status
 
 ## related projects
 
-+ https://github.com/krescue/krescue
-+ https://github.com/krescue/khadas-rescue-sdk
-+ https://github.com/krescue/khadas-rescue-rootfs
-+ https://github.com/krescue/khadas-openwrt-feed-extra
-+ https://github.com/krescue/khadas-openwrt-sdk
-+ https://github.com/krescue/khadas-linux-kernel
-+ https://github.com/krescue/khadas-uboot
++ https://github.com/khadas/krescue
++ https://github.com/khadas/khadas-rescue-sdk
++ https://github.com/khadas/khadas-rescue-rootfs
++ https://github.com/khadas/khadas-openwrt-feed-extra
++ https://github.com/khadas/khadas-openwrt-sdk
++ https://github.com/khadas/khadas-linux-kernel
++ https://github.com/khadas/khadas-uboot
 
 \## hyphop ##
