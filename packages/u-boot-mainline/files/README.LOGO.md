@@ -16,6 +16,10 @@ uboot LOGO, displayed after uboot activate display
 raw bmp and gzipped bmp must have same name splash.bmp or logo.bmp
 and same .bmp extension (without .gz)
 
+## CONVERT
+
+    convert KHADAS_LOGO_2005_360x360.png splash.raw.bmp
+
 ## PACK
 
     gzip -9c splash.raw.bmp > splash.bmp
