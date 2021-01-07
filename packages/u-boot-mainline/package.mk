@@ -12,6 +12,14 @@ PKG_ARCH="arm aarch64"
 PKG_LICENSE="GPL"
 PKG_NEED_BUILD="YES"
 
+[ "$OLD" ] || {
+PKG_VERSION="0719bf42931033c3109ecc6357e8adb567cb637b"
+PKG_SOURCE_DIR="u-boot-$PKG_VERSION"
+PKG_SOURCE_NAME="u-boot-$PKG_VERSION.tar.gz"
+PKG_URL="$PKG_SITE/archive/$PKG_VERSION.tar.gz"
+PKG_SHA256="6b196b6592fabed060b7c5b1fa05a743f9be131d11389b762b7d0e2beebbd381"
+}
+
 make_target_deps(){
 
 	[ -d "$BUILD/arm-trusted-firmware/build/rk3399/release/bl31/bl31.elf" ] || {
@@ -48,12 +56,14 @@ make_target_deps(){
 	    echo "[i] BL31 $BL31"
 	    }
 
-	    # add embed uboot khadas logo
-	    grep -q logo arch/arm/dts/rk3399-khadas-edge.dtsi 2>/dev/null || {
-		export LOGO_PATH=$(realpath "$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz")
-		ls -l1 $LOGO_PATH
-		echo "[i] inject logo to dtb $LOGO_PATH"
-		sh $PKGS_DIR/$PKG_NAME/files/u-boot.logo.tpl >> arch/arm/dts/rk3399-khadas-edge.dtsi
+	    [ "$OLD" ] && {
+	    	# add embed uboot khadas logo
+	    	grep -q logo arch/arm/dts/rk3399-khadas-edge.dtsi 2>/dev/null || {
+	    	export LOGO_PATH=$(realpath "$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz")
+	    	ls -l1 $LOGO_PATH
+	    	echo "[i] inject logo to dtb $LOGO_PATH"
+	    	sh $PKGS_DIR/$PKG_NAME/files/u-boot.logo.tpl >> arch/arm/dts/rk3399-khadas-edge.dtsi
+	    	}
 	    }
 
 	}
@@ -74,12 +84,19 @@ make_target() {
 post_make_target() {
 
 
-	case "$VENDOR" in 
+	case "$VENDOR" in
 
 		Amlogic)
 
 		# add embed uboot khadas logo
-		cat u-boot-nodtb.bin u-boot.dtb "$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz" > u-boot.bin
+		# cat u-boot-nodtb.bin u-boot.dtb "$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz" > u-boot.bin
+		# new safe method
+		echo "[i] inject dtb logo">&2
+		dtc -q u-boot.dtb > u-boot.dts
+		LOGO_PATH="$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz" \
+		sh "$PKGS_DIR/$PKG_NAME/files/u-boot.logo.tpl" >> u-boot.dts
+		dtc -q u-boot.dts > u-boot.dtb
+		cat u-boot-nodtb.bin u-boot.dtb > u-boot.bin
 
 		# Add firmware
 		rm -rf "$BUILD/$PKG_NAME-$PKG_VERSION/fip"
@@ -139,6 +156,19 @@ UBOOT_SD_MMC=u-boot.mmc.64.bin
 UBOOT_SD_MMC0=u-boot.sd.bin
 UBOOT_SPI=u-boot.spi.bin
 UBOOT_PAYLOAD=0x40000
+
+[ "$OLD" ] || {
+		echo "[i] inject dtb logo">&2
+		D=rk3399-khadas-edge-v.dtb
+		DTS=/tmp/${D%.*}.dts
+		DTB="arch/arm/dts/$D"
+		dtc -q $DTB > $DTS
+		LOGO_PATH="$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz" \
+		sh "$PKGS_DIR/$PKG_NAME/files/u-boot.logo.tpl" >> $DTS
+		dtc -q $DTS > $DTB
+		cp $DTB u-boot.dtb
+		dtc -q $BS/u-boot.its > $BS/u-boot.itb
+}
 
 [ -d "$BS/tpl" ] && {
 echo "[i] TPL+SPL SPI"
