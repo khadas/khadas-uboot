@@ -23,6 +23,7 @@ mainline u-boot for Khadas VIM and EDGE sbc series
 + boot seq SPI => USB => SD => NVME => MMC => PXE => DHCP
 + fully stand-alone
 + auto store uboot env to first fat partition uboot.env file to booted source
++ embed fat partition for sd/mmc images - special for store uboot.env or logo
 
 ## install & usage
 
