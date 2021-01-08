@@ -121,7 +121,7 @@ index 6c107870..79338426 100644
 +	"load mmc 2:2 $loadaddr /usr/share/fenix/logo/logo.bmp || " \
 +	"ll=0; " \
 +	"test $ll = 1 && bmp display $loadaddr m m || ll=0; " \
-+	"test $ll = 0 && fdt addr $fdtcontroladdr && fdt get addr loadaddr /logo data && bmp display $loadaddr m m && echo [i] display embed logo; "
++	"test $ll = 0 && fdt addr $fdtcontroladdr && fdt get addr logoaddr /logo data && bmp display $logoaddr m m && echo [i] display embed logo; "
 +
 +#define PREBOOT_CMD "run load_logo; usb start; kbi init; sleep 1;"
 +

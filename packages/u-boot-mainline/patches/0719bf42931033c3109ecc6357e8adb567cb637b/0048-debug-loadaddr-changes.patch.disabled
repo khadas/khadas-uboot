@@ -1,0 +1,24 @@
+From 1d8ec218ce183b3715d555e34ab436c8536adf7b Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 8 Jan 2021 14:49:57 +0800
+Subject: [PATCH] debug loadaddr changes
+
+---
+ common/image.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/common/image.c b/common/image.c
+index 451fc689..1c79df9b 100644
+--- a/common/image.c
++++ b/common/image.c
+@@ -649,6 +649,7 @@ static int on_loadaddr(const char *name, const char *value, enum env_op op,
+ 	case env_op_create:
+ 	case env_op_overwrite:
+ 		image_load_addr = simple_strtoul(value, NULL, 16);
++		printf("[i] set env loadaddr: 0x%08lx\n", image_load_addr);
+ 		break;
+ 	default:
+ 		break;
+-- 
+2.25.1
+
