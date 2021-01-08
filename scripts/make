@@ -78,7 +78,9 @@ post_make_target(){
 BS="$BUILD/$PKG_SOURCE_DIR"
 
 [ -s "$BS" ] || { echo "[i] EXTRACT ... $BS"
-CMD tar -xf"$(realpath "$DOWNLOADS/$PKG_SOURCE_NAME")" -C"$BUILD" --one-top-level="$PKG_SOURCE_DIR"
+#CMD tar -xf"$(realpath "$DOWNLOADS/$PKG_SOURCE_NAME")" -C"$BUILD" --one-top-level="$PKG_SOURCE_DIR"
+CMD tar -xf"$(realpath "$DOWNLOADS/$PKG_SOURCE_NAME")" \
+    -C"$BUILD" --strip-components=1 --one-top-level="$PKG_SOURCE_DIR"
 CMD ln -sf "$PKG_SOURCE_DIR" "$BUILD/$PKG_NAME"
 CMD ln -sf "$PKG_SOURCE_DIR" "$BUILD/$PKG_NAME-$PKG_VERSION"
 }
