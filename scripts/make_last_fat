@@ -1,0 +1,62 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make last fat VIM1 VIM2 VIM3 VIM3L
+
+PR=$(dirname $0)
+RP=$(realpath $PR)
+
+cd "$PR" || exit 1
+
+. ./build.conf
+
+[ "$BOARDS" ] || BOARDS="$@"
+[ "$BOARDS" ] || \
+BOARDS="VIM1 VIM2 VIM3 VIM3L"
+
+FAT=/tmp/fat.img
+
+[ -s "$FAT" ] || {
+    echo "[i] generate fat part to $FAT">&2
+    truncate -s128K $FAT
+    mkfs.vfat -n ubootconfig -i10203040 $FAT
+}
+
+for BOARD in $BOARDS ; do
+
+    case $BOARD in
+	VIM*)
+	;;
+	*)
+	continue
+	;;
+    esac
+
+    UBOOT="$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0"
+
+    [ -s "$UBOOT" ] || continue
+
+    echo "[i] fat check for $UBOOT">&2
+
+    tail -c128K "$UBOOT" | head -c200 | hexdump -C | grep FAT && {
+    echo "[i] fat config already exist">&2
+    continue
+    }
+
+    # round pad by 64K
+    FAT_OFFSET0=$(stat -c%s "$UBOOT")
+    truncate -s%64K "$UBOOT"
+    FAT_OFFSET=$(stat -c%s "$UBOOT")
+    echo "[i] add fat to the end $FAT_OFFSET ($FAT_OFFSET0)">&2
+    cat "$FAT" >> "$UBOOT"
+
+    echo "
+device: p
+unit: sectors
+grain: 512
+
+p1 : start=2304, type=e
+" | sfdisk -q "$UBOOT"
+
+done

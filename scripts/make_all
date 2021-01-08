@@ -39,5 +39,5 @@ for D in $CONFIGS ; do
 done
 
 ./make_krescue_image
-
+./make_last_fat
 ./make_post
