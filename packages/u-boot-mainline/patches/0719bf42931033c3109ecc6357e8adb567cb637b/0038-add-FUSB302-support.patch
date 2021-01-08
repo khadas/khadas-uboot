@@ -5,7 +5,6 @@ Subject: [PATCH 38/43] add FUSB302 support
 
 Signed-off-by: Nick Xie <nick@khadas.com>
 ---
- board/amlogic/w400/w400.c |    3 +
  drivers/power/Kconfig     |    7 +
  drivers/power/Makefile    |    1 +
  drivers/power/fusb302.c   | 1224 +++++++++++++++++++++++++++++++++++++
@@ -14,20 +13,6 @@ Signed-off-by: Nick Xie <nick@khadas.com>
  create mode 100644 drivers/power/fusb302.c
  create mode 100644 include/fusb302.h
 
-diff --git a/board/amlogic/w400/w400.c b/board/amlogic/w400/w400.c
-index 47a51710..fae62959 100644
---- a/board/amlogic/w400/w400.c
-+++ b/board/amlogic/w400/w400.c
-@@ -15,6 +15,9 @@
- int misc_init_r(void)
- {
- 	meson_eth_init(PHY_INTERFACE_MODE_RGMII, 0);
-+#if defined CONFIG_POWER_FUSB302
-+	fusb302_init();
-+#endif
- 
- 	return 0;
- }
 diff --git a/drivers/power/Kconfig b/drivers/power/Kconfig
 index 02050f6f..bd82c3e1 100644
 --- a/drivers/power/Kconfig
@@ -58,7 +43,7 @@ new file mode 100644
 index 00000000..8b2b75ed
 --- /dev/null
 +++ b/drivers/power/fusb302.c
-@@ -0,0 +1,1224 @@
+@@ -0,0 +1,1225 @@
 +/*
 + * (C) Copyright 2019 Shenzhen Wesion Co., Ltd
 + *
@@ -75,7 +60,7 @@ index 00000000..8b2b75ed
 +#include <asm/gpio.h>
 +#include <fusb302.h>
 +#include <asm/io.h>
-+
++#include <linux/delay.h>
 +#define FUSB30X_I2C_DEVICETREE_NAME		"fairchild,fusb302"
 +#if defined (CONFIG_ARCH_ROCKCHIP)
 +    #define FUSB302_I2C_BUS_NUM		4
@@ -196,7 +181,7 @@ index 00000000..8b2b75ed
 +
 +#ifdef CONFIG_DM_I2C
 +	struct udevice *dev;
-+	struct dm_i2c_chip *i2c_chip;
++	//struct dm_i2c_chip *i2c_chip;
 +#endif
 +
 +	chip = FUSB302_I2C_ADDR;
@@ -210,6 +195,7 @@ index 00000000..8b2b75ed
 +#endif
 +	if (ret)
 +		printf("Error writing the chip: %d\n",ret);
++	return ret;
 +}
 +
 +int fusb302_i2c_raw_write(u8 reg, const void *val, size_t val_len)
@@ -218,7 +204,7 @@ index 00000000..8b2b75ed
 +	uchar chip;
 +#ifdef CONFIG_DM_I2C
 +	struct udevice *dev;
-+	struct dm_i2c_chip *i2c_chip;
++	//struct dm_i2c_chip *i2c_chip;
 +#endif
 +
 +	chip = FUSB302_I2C_ADDR;

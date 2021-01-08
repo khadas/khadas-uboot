@@ -1,0 +1,31 @@
+From b6e19c4a8eaac6b854ed609bb09a83cc6505b417 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 8 Jan 2021 10:54:05 +0800
+Subject: [PATCH] meson amlogic VIM3x ethernet mac fixed from serial
+
+---
+ board/amlogic/vim3/vim3.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/board/amlogic/vim3/vim3.c b/board/amlogic/vim3/vim3.c
+index 09ef39ff..0315eaf5 100644
+--- a/board/amlogic/vim3/vim3.c
++++ b/board/amlogic/vim3/vim3.c
+@@ -133,5 +133,14 @@ int misc_init_r(void)
+ {
+ 	meson_eth_init(PHY_INTERFACE_MODE_RGMII, 0);
+ 
++	u8 mac_addr[6];
++	if (!eth_env_get_enetaddr("ethaddr", mac_addr)) {
++		meson_generate_serial_ethaddr();
++		eth_env_get_enetaddr("ethaddr", mac_addr);
++		printf("[i] serial eth mac %02X:%02X:%02X:%02X:%02X:%02X\n",
++			mac_addr[0],mac_addr[1],mac_addr[2],
++			mac_addr[3],mac_addr[4],mac_addr[5]);
++	}
++
+ 	return 0;
+ }
+-- 
+2.25.1
+

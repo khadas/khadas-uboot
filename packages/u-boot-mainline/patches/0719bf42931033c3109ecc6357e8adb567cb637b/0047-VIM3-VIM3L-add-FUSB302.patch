@@ -1,0 +1,27 @@
+From 65239cc03e4d677fd93e71b08cfcbf01c29297b3 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 8 Jan 2021 10:59:24 +0800
+Subject: [PATCH] VIM3 VIM3L add FUSB302
+
+---
+ board/amlogic/vim3/vim3.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/board/amlogic/vim3/vim3.c b/board/amlogic/vim3/vim3.c
+index 0315eaf5..93f3019a 100644
+--- a/board/amlogic/vim3/vim3.c
++++ b/board/amlogic/vim3/vim3.c
+@@ -142,5 +142,10 @@ int misc_init_r(void)
+ 			mac_addr[3],mac_addr[4],mac_addr[5]);
+ 	}
+ 
++#if defined CONFIG_POWER_FUSB302
++#include <fusb302.h>
++	fusb302_init();
++#endif
++
+ 	return 0;
+ }
+-- 
+2.25.1
+
