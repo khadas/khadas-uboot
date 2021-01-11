@@ -1,0 +1,71 @@
+From 9b8cebb7ba3d6e0a39402b77ef66e2e5d4f5176c Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 11 Jan 2021 09:49:32 +0800
+Subject: [PATCH] board: amlogic: vim3: ethernet mac setup
+
+Fixed randomly generated ethernet mac address!
+
+1) Check u-boot env ethaddr
+2) Try to read mac from efuse - by default is empty
+3) Used meson_generate_serial_ethaddr for generate mac address from
+board serial number, if ethaddr variable still empty.
+
+patch from: Marek Szyprowski <m.szyprowski@samsung.com>
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ board/amlogic/vim3/vim3.c | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/board/amlogic/vim3/vim3.c b/board/amlogic/vim3/vim3.c
+index 09ef39ff30..42b849ffcf 100644
+--- a/board/amlogic/vim3/vim3.c
++++ b/board/amlogic/vim3/vim3.c
+@@ -11,6 +11,7 @@
+ #include <net.h>
+ #include <asm/io.h>
+ #include <asm/arch/eth.h>
++#include <asm/arch/sm.h>
+ #include <i2c.h>
+ #include "khadas-mcu.h"
+ 
+@@ -129,9 +130,36 @@ int meson_ft_board_setup(void *blob, struct bd_info *bd)
+ 	return 0;
+ }
+ 
++#define EFUSE_MAC_OFFSET	0
++#define EFUSE_MAC_SIZE		6
++
+ int misc_init_r(void)
+ {
++	uint8_t mac_addr[EFUSE_MAC_SIZE];
++	ssize_t len;
++	char mac_src[]="environment";
++
+ 	meson_eth_init(PHY_INTERFACE_MODE_RGMII, 0);
+ 
++	if (!eth_env_get_enetaddr("ethaddr", mac_addr)) {
++		len = meson_sm_read_efuse(EFUSE_MAC_OFFSET,
++					  mac_addr, EFUSE_MAC_SIZE);
++		if (len != EFUSE_MAC_SIZE)
++			return 0;
++
++		if (is_valid_ethaddr(mac_addr)) {
++			eth_env_set_enetaddr("ethaddr", mac_addr);
++			strcpy(mac_src,"efuse");
++		} else {
++			meson_generate_serial_ethaddr();
++			strcpy(mac_src,"serial");
++		}
++	}
++
++	eth_env_get_enetaddr("ethaddr", mac_addr);
++	printf("[i] eth mac %02X:%02X:%02X:%02X:%02X:%02X from %s\n",
++		mac_addr[0],mac_addr[1],mac_addr[2],
++		mac_addr[3],mac_addr[4],mac_addr[5], mac_src);
++
+ 	return 0;
+ }
+-- 
+2.25.1
+
