@@ -215,20 +215,19 @@ cd -
 [ -s "$BS/.config" ] || {
 make -C"$BS" $DEF_CONFIG
 
-echo '
+    cat $RP/../packages/u-boot-mainline/files/overwrite.config >> "$BS/.config"
 
-CONFIG_AUTOBOOT=y
-CONFIG_AUTOBOOT_KEYED=y
-CONFIG_AUTOBOOT_PROMPT="Hit SPACE in %d seconds to stop autoboot"
-# CONFIG_AUTOBOOT_ENCRYPTION is not set
-CONFIG_AUTOBOOT_DELAY_STR="2"
-CONFIG_AUTOBOOT_STOP_STR=" "
-CONFIG_AUTOBOOT_KEYED_CTRLC=y
-' >> "$BS/.config"
+case $BOARD in
+    VIM*)
+    cat $RP/../packages/u-boot-mainline/files/overwrite.vims.config >> "$BS/.config"
+    ;;
+esac
 
 # CONFIG_SARADC_MESON=y
 
 }
+
+#rm "$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0"
 
 make -C"$BS" $PJ $@ || FAIL make fail
 
@@ -271,8 +270,10 @@ case $VENDOR in
 
     *)
     echo "[i] $BOARD store"
+#    [ "$BOARD" = "VIM1" ] || \
     CMD cp $BS/fip/u-boot.bin		$UBOOT_DIR1/$UBOOT_SPI
     CMD cp $BS/fip/u-boot.bin.sd.bin	$UBOOT_DIR1/$UBOOT_SD_MMC0
+#    [ "$BOARD" = "VIM1" ] || \
     CMD cp $BS/fip/u-boot.bin		$UBOOT_DIR2/$BOARD.$UBOOT_SPI
     CMD cp $BS/fip/u-boot.bin.sd.bin	$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0
 
@@ -285,17 +286,6 @@ case $VENDOR in
     ln -sf "$BS/fip/u-boot.bin.sd.bin"	"$U"
     }
 
-
-    [ "$COMPRESS" ] && {
-    for C in \
-    $UBOOT_DIR1/$BOARD.$UBOOT_SPI $UBOOT_DIR1/$BOARD.$UBOOT_SD_MMC0 \
-    $UBOOT_DIR2/$BOARD.$UBOOT_SPI $UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0 \
-    ; do
-	[ -e "$C.$CMP_" ] && rm $C.$CMP_
-	echo "$CMP $C > $C.$CMP_"
-	$CMP $C > $C.$CMP_
-    done
-    }
     ;;
 
 esac
