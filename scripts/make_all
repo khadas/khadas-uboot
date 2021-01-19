@@ -22,8 +22,6 @@ for D in $CONFIGS ; do
     echo $D
     export DEF_CONFIG="${D}_defconfig"
 
-    ls -l1 
-
     . ./make.inc
 
     ./make re || {
@@ -31,13 +29,15 @@ for D in $CONFIGS ; do
 	exit 1
     }
 
-    [ "$VENDOR" = "Amlogic" ] && \
+    BOARDS=$BOARD ./make_last_env
+
+    [ "$VENDOR" = "Amlogic" ] && {
     ./make_aml_burn_images $BOARD
+    }
 
     echo "[i] $BOARD DONE"
 
 done
 
 ./make_krescue_image
-./make_last_fat
 ./make_post
