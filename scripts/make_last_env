@@ -1,0 +1,51 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= make last fat VIM1 VIM2 VIM3 VIM3L
+
+PR=$(dirname $0)
+RP=$(realpath $PR)
+
+cd "$PR" || exit 1
+
+. ./build.conf
+
+[ "$BOARDS" ] || BOARDS="$@"
+[ "$BOARDS" ] || \
+BOARDS="VIM1 VIM2 VIM3 VIM3L"
+
+#$((4096*300))
+UBOOT_MAX_SIZE=1228800
+UBOOT_ENV_OFFSET=$(printf 0x%X $UBOOT_MAX_SIZE)
+UBOOT_ENV_SIZE=0x2000
+UBOOT_ENV_SIZE=0x8000
+UBOOT_WITH_ENV_SIZE=$((UBOOT_MAX_SIZE+UBOOT_ENV_SIZE))
+
+for BOARD in $BOARDS ; do
+
+    case $BOARD in
+	VIM*)
+	;;
+	*)
+	continue
+	;;
+    esac
+
+    UBOOT="$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0"
+
+    [ -s "$UBOOT" ] || continue
+
+    # round pad by 64K
+    UBOOT_SIZE=$(stat -L -c%s "$UBOOT")
+
+    echo "[i] uboot $BOARD size $UBOOT_SIZE => $UBOOT_WITH_ENV_SIZE ENV_OFFSET::$UBOOT_ENV_OFFSET + ENV_SIZE: $UBOOT_ENV_SIZE"
+
+    [ "$UBOOT_SIZE" -gt "$UBOOT_MAX_SIZE" ] && {
+	echo "[e] need inc UBOOT_MAX_SIZE and ENV_OFFSET from $UBOOT_MAX_SIZE => $UBOOT_SIZE+"
+	exit 1
+    }
+
+    truncate -s$UBOOT_WITH_ENV_SIZE "$UBOOT"
+
+done
