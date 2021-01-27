@@ -1,0 +1,34 @@
+From de874c6e5cce9b590c4f557dc1b557b09fcbe6aa Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 27 Jan 2021 09:04:59 +0800
+Subject: [PATCH] env add verbose for read write size
+
+---
+ env/mmc.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/env/mmc.c b/env/mmc.c
+index 251ad07d..196e0199 100644
+--- a/env/mmc.c
++++ b/env/mmc.c
+@@ -217,7 +217,7 @@ static int env_mmc_save(void)
+ 		goto fini;
+ 	}
+ 
+-	printf("Writing to %sMMC(%d)... ", copy ? "redundant " : "", dev);
++	printf("Writing to %sMMC(%d)... 0x%X", copy ? "redundant " : "", dev, CONFIG_ENV_SIZE);
+ 	if (write_env(mmc, CONFIG_ENV_SIZE, offset, (u_char *)env_new)) {
+ 		puts("failed\n");
+ 		ret = 1;
+@@ -368,6 +368,8 @@ static int env_mmc_load(void)
+ 		goto fini;
+ 	}
+ 
++	printf("read env size: 0x%X\n", CONFIG_ENV_SIZE);
++
+ 	if (read_env(mmc, CONFIG_ENV_SIZE, offset, buf)) {
+ 		errmsg = "!read failed";
+ 		ret = -EIO;
+-- 
+2.25.1
+

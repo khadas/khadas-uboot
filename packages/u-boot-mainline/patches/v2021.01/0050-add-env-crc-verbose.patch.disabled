@@ -1,0 +1,40 @@
+From 7081dc3dcc1b6b7c14580645bc1607aedc7016b0 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 27 Jan 2021 08:19:09 +0800
+Subject: [PATCH] add env crc verbose
+
+---
+ env/common.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/env/common.c b/env/common.c
+index 1fd1bd01..1d8838fb 100644
+--- a/env/common.c
++++ b/env/common.c
+@@ -113,10 +113,12 @@ int env_import(const char *buf, int check)
+ 
+ 	if (check) {
+ 		uint32_t crc;
+-
++		uint32_t crc2 = crc32(0, ep->data, ENV_SIZE);
+ 		memcpy(&crc, &ep->crc, sizeof(crc));
+ 
+-		if (crc32(0, ep->data, ENV_SIZE) != crc) {
++		printf("env_import: crc: 0x%X crc2: 0x%X size: 0x%lX\n", crc, crc2, ENV_SIZE );
++
++		if ( crc2 != crc) {
+ 			env_set_default("bad CRC", 0);
+ 			return -ENOMSG; /* needed for env_load() */
+ 		}
+@@ -216,6 +218,8 @@ int env_export(env_t *env_out)
+ 
+ 	env_out->crc = crc32(0, env_out->data, ENV_SIZE);
+ 
++	printf("env_export: crc: 0x%X size: 0x%lX\n", env_out->crc, ENV_SIZE );
++
+ #ifdef CONFIG_SYS_REDUNDAND_ENVIRONMENT
+ 	env_out->flags = ++env_flags; /* increase the serial */
+ #endif
+-- 
+2.25.1
+
