@@ -1,0 +1,27 @@
+From 735779147a12283c8ba2a6f5252fab796a505868 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 11 Feb 2021 09:01:02 +0800
+Subject: [PATCH] meson64 config add fdt overlay and compression addr vars
+
+---
+ include/configs/meson64.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/configs/meson64.h b/include/configs/meson64.h
+index ea4762a6..1faffda4 100644
+--- a/include/configs/meson64.h
++++ b/include/configs/meson64.h
+@@ -112,6 +112,10 @@
+ 	"kernel_addr_r=0x08080000\0" \
+ 	"pxefile_addr_r=0x01080000\0" \
+ 	"ramdisk_addr_r=0x13000000\0" \
++	"fdtoverlay_addr_r=0x08070000\0" \
++	"kernel_comp_addr_r=0x0d080000\0" \
++	"kernel_comp_size=10000000\0" \
++	"pxeuuid=00000000-0000-0000-0000-000000000000\0" \
+ 	"fdtfile=amlogic/" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
+ 	BOOTENV
+ #endif
+-- 
+2.25.1
+
