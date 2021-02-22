@@ -1,0 +1,41 @@
+From 647674e4af43108ba53085075e176dd185f7a5d5 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 22 Feb 2021 12:27:18 +0800
+Subject: [PATCH] power domain meson-ee-pwrc debug
+
+---
+ drivers/power/domain/meson-ee-pwrc.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/power/domain/meson-ee-pwrc.c b/drivers/power/domain/meson-ee-pwrc.c
+index 8349a9c1..8cb2c372 100644
+--- a/drivers/power/domain/meson-ee-pwrc.c
++++ b/drivers/power/domain/meson-ee-pwrc.c
+@@ -260,6 +260,7 @@ static int meson_ee_pwrc_off(struct power_domain *power_domain)
+ 	int i;
+ 
+ 	pwrc_domain = &priv->data->domains[power_domain->id];
++	printf("!!!%s BEGIN %lu %s\n", __func__, power_domain->id, pwrc_domain->name);
+ 
+ 	if (pwrc_domain->top_pd)
+ 		regmap_update_bits(priv->regmap_ao,
+@@ -287,6 +288,8 @@ static int meson_ee_pwrc_off(struct power_domain *power_domain)
+ 		clk_disable_bulk(&priv->clks);
+ 	}
+ 
++	printf("!!!%s END %lu %s\n", __func__, power_domain->id, pwrc_domain->name);
++
+ 	return 0;
+ }
+ 
+@@ -297,6 +300,7 @@ static int meson_ee_pwrc_on(struct power_domain *power_domain)
+ 	int i, ret;
+ 
+ 	pwrc_domain = &priv->data->domains[power_domain->id];
++	printf("!!!%s BEGIN %lu %s\n", __func__, power_domain->id, pwrc_domain->name);
+ 
+ 	if (pwrc_domain->top_pd)
+ 		regmap_update_bits(priv->regmap_ao,
+-- 
+2.25.1
+
