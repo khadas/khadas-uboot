@@ -1,0 +1,94 @@
+From 6002a964c20c60a06e300afafaf70b1ed71baa72 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 23 Feb 2021 12:41:50 +0800
+Subject: [PATCH] pxe_utils: add localcmd defination
+
+---
+ cmd/pxe_utils.c | 23 ++++++++++++++++++++++-
+ cmd/pxe_utils.h |  1 +
+ 2 files changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 82eb299b..0265f762 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -319,7 +319,11 @@ static int label_localboot(struct pxe_label *label)
+ {
+ 	char *localcmd;
+ 
+-	localcmd = from_env("localcmd");
++	if (label->localcmd) {
++		localcmd = label->localcmd;
++	} else {
++		localcmd = from_env("localcmd");
++	}
+ 
+ 	if (!localcmd)
+ 		return -ENOENT;
+@@ -459,6 +463,11 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 		return 0;
+ 	}
+ 
++	if (label->localcmd) {
++		if (!label->localboot_val)
++		    return run_command_list(label->localcmd, strlen(label->localcmd), 0);
++	}
++
+ 	if (!label->kernel) {
+ 		printf("No kernel given, skipping %s\n",
+ 		       label->name);
+@@ -676,6 +685,7 @@ enum token_type {
+ 	T_APPEND,
+ 	T_INITRD,
+ 	T_LOCALBOOT,
++	T_LOCALCMD,
+ 	T_DEFAULT,
+ 	T_PROMPT,
+ 	T_INCLUDE,
+@@ -709,6 +719,7 @@ static const struct token keywords[] = {
+ 	{"kernel", T_KERNEL},
+ 	{"linux", T_LINUX},
+ 	{"localboot", T_LOCALBOOT},
++	{"localcmd", T_LOCALCMD},
+ 	{"append", T_APPEND},
+ 	{"initrd", T_INITRD},
+ 	{"include", T_INCLUDE},
+@@ -1089,6 +1100,7 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 	int len;
+ 	char *s = *c;
+ 	struct pxe_label *label;
++	char *add;
+ 	int err;
+ 
+ 	label = label_create();
+@@ -1159,6 +1171,15 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 			err = parse_integer(c, &label->localboot_val);
+ 			break;
+ 
++		case T_LOCALCMD:
++			if ( label->localcmd ) {
++				if ( parse_sliteral(c, &add ) )
++					sprintf(label->localcmd, "%s\n%s", label->localcmd, add);
++			} else {
++			    err = parse_sliteral(c, &label->localcmd);
++			}
++			break;
++
+ 		case T_IPAPPEND:
+ 			err = parse_integer(c, &label->ipappend);
+ 			break;
+diff --git a/cmd/pxe_utils.h b/cmd/pxe_utils.h
+index 6af95237..d5475e84 100644
+--- a/cmd/pxe_utils.h
++++ b/cmd/pxe_utils.h
+@@ -48,6 +48,7 @@ struct pxe_label {
+ 	int attempted;
+ 	int localboot;
+ 	int localboot_val;
++	char *localcmd;
+ 	struct list_head list;
+ };
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,40 @@
+From f859c9920e7b341164d2ec54d4e493f2b29a1ab8 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 23 Feb 2021 13:55:11 +0800
+Subject: [PATCH] pxe localcmd add alias
+
+---
+ cmd/pxe_utils.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 0265f762..333f2073 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -686,6 +686,7 @@ enum token_type {
+ 	T_INITRD,
+ 	T_LOCALBOOT,
+ 	T_LOCALCMD,
++	T_LOCALCMD2,
+ 	T_DEFAULT,
+ 	T_PROMPT,
+ 	T_INCLUDE,
+@@ -720,6 +721,7 @@ static const struct token keywords[] = {
+ 	{"linux", T_LINUX},
+ 	{"localboot", T_LOCALBOOT},
+ 	{"localcmd", T_LOCALCMD},
++	{"!", T_LOCALCMD2},
+ 	{"append", T_APPEND},
+ 	{"initrd", T_INITRD},
+ 	{"include", T_INCLUDE},
+@@ -1172,6 +1174,7 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 			break;
+ 
+ 		case T_LOCALCMD:
++		case T_LOCALCMD2:
+ 			if ( label->localcmd ) {
+ 				if ( parse_sliteral(c, &add ) )
+ 					sprintf(label->localcmd, "%s\n%s", label->localcmd, add);
+-- 
+2.25.1
+
