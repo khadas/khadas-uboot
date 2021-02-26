@@ -1,0 +1,123 @@
+From 8ad35275c4d3547731cca4f26869edc47c1425fa Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 26 Feb 2021 11:59:55 +0800
+Subject: [PATCH] pxe_utils: improve dftoverlay path
+
+I think be useful improve dftoverlay path logic, welcome for any suggestions.
+
+Fdtoverlaydir definition usage example
+
+LABEL linux
+...
+FDTOVERLAYDIR fdt
+FDTOVERLAYS ethmac_disable.dtbo pcie_disable.dtbo vpu_disable.dtbo
+# same as 
+# FDTOVERLAYS fdt/ethmac_disable.dtbo fdt/pcie_disable.dtbo fdt/vpu_disable.dtbo
+
+Usage without overlayfile extension (.dtbo)
+
+LABEL linux
+...
+FDTOVERLAYS fdt/ethmac_disable fdt/pcie_disable fdt/vpu_disable
+# same as 
+# FDTOVERLAYS fdt/ethmac_disable.dtbo fdt/pcie_disable.dtbo fdt/vpu_disable.dtbo
+
+Complex usage
+
+LABEL linux
+...
+FDTOVERLAYDIR fdt
+FDTOVERLAYS ethmac_disable pcie_disable vpu_disable
+# same as 
+# FDTOVERLAYS fdt/ethmac_disable.dtbo fdt/pcie_disable.dtbo fdt/vpu_disable.dtbo
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 22 ++++++++++++++++++++--
+ cmd/pxe_utils.h |  1 +
+ 2 files changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 333f2073..a657fde6 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -289,6 +289,9 @@ static void label_destroy(struct pxe_label *label)
+ 	if (label->fdtoverlays)
+ 		free(label->fdtoverlays);
+ 
++	if (label->fdtoverlaydir)
++		free(label->fdtoverlaydir);
++
+ 	free(label);
+ }
+ 
+@@ -352,6 +355,8 @@ static void label_boot_fdtoverlay(struct cmd_tbl *cmdtp, struct pxe_label *label
+ 	ulong fdtoverlay_addr;
+ 	ulong fdt_addr;
+ 	int err;
++	char overlayext[] = ".dtbo";
++	char path[MAX_TFTP_PATH_LEN + 1];
+ 
+ 	/* Get the main fdt and map it */
+ 	fdt_addr = simple_strtoul(env_get("fdt_addr_r"), NULL, 16);
+@@ -393,9 +398,15 @@ static void label_boot_fdtoverlay(struct cmd_tbl *cmdtp, struct pxe_label *label
+ 		if (!strlen(overlayfile))
+ 			goto skip_overlay;
+ 
++		/* make overlay path */
++		sprintf(path, "%s%s%s%s",
++			label->fdtoverlaydir ? label->fdtoverlaydir : "",
++			label->fdtoverlaydir ? "/" : "",
++			overlayfile,
++			strstr(fdtoverlay, overlayext) ? "" : overlayext);
++
+ 		/* Load overlay file */
+-		err = get_relfile_envaddr(cmdtp, overlayfile,
+-					  "fdtoverlay_addr_r");
++		err = get_relfile_envaddr(cmdtp, path, "fdtoverlay_addr_r");
+ 		if (err < 0) {
+ 			printf("Failed loading overlay %s\n", overlayfile);
+ 			goto skip_overlay;
+@@ -693,6 +704,7 @@ enum token_type {
+ 	T_FDT,
+ 	T_FDTDIR,
+ 	T_FDTOVERLAYS,
++	T_FDTOVERLAYDIR,
+ 	T_ONTIMEOUT,
+ 	T_IPAPPEND,
+ 	T_BACKGROUND,
+@@ -730,6 +742,7 @@ static const struct token keywords[] = {
+ 	{"devicetreedir", T_FDTDIR},
+ 	{"fdtdir", T_FDTDIR},
+ 	{"fdtoverlays", T_FDTOVERLAYS},
++	{"fdtoverlaydir", T_FDTOVERLAYDIR},
+ 	{"ontimeout", T_ONTIMEOUT,},
+ 	{"ipappend", T_IPAPPEND,},
+ 	{"background", T_BACKGROUND,},
+@@ -1168,6 +1181,11 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 				err = parse_sliteral(c, &label->fdtoverlays);
+ 			break;
+ 
++		case T_FDTOVERLAYDIR:
++			if (!label->fdtoverlaydir)
++				err = parse_sliteral(c, &label->fdtoverlaydir);
++			break;
++
+ 		case T_LOCALBOOT:
+ 			label->localboot = 1;
+ 			err = parse_integer(c, &label->localboot_val);
+diff --git a/cmd/pxe_utils.h b/cmd/pxe_utils.h
+index d5475e84..cdac1327 100644
+--- a/cmd/pxe_utils.h
++++ b/cmd/pxe_utils.h
+@@ -44,6 +44,7 @@ struct pxe_label {
+ 	char *fdt;
+ 	char *fdtdir;
+ 	char *fdtoverlays;
++	char *fdtoverlaydir;
+ 	int ipappend;
+ 	int attempted;
+ 	int localboot;
+-- 
+2.25.1
+
