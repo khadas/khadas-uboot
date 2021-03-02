@@ -1,7 +1,7 @@
 From 474780fb79ce06aed00a7ab4ead1b906525d5db6 Mon Sep 17 00:00:00 2001
 From: Artem Lapkin <art@khadas.com>
 Date: Mon, 1 Mar 2021 15:17:18 +0800
-Subject: [PATCH] pxe_utils: add localcmd defination
+Subject: [RESEND v1] pxe_utils: add localcmd defination
 
 pxe localboot usage too much limited, i think be useful improve it
 welcome for any suggestions and feedbacks...
@@ -18,7 +18,7 @@ Usage examples
 
 # standalone usage
 LABEL update_uboot
- LOCALCMD	ip=$tftpip && tftpboot $ip:boot.scr.uimg && script
+ LOCALCMD	ip=$tftp_remote_ip && tftpboot $ip:boot.scr.uimg && script
 
 LABEL reset
 # multiline usage
@@ -36,6 +36,10 @@ LABEL localboot
  LOCALCMD	echo temporary redefine localcmd
 
 Signed-off-by: Artem Lapkin <art@khadas.com>
+
+---
+v1:
+- fix free(label->localcmd) add proper realloc for multiline localcmd
 ---
  cmd/pxe_utils.c | 39 ++++++++++++++++++++++++++++++++++++++-
  cmd/pxe_utils.h |  1 +
