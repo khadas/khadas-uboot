@@ -41,7 +41,21 @@ saveenv
 + uboot booted from SPI => Environment use SPI location
 + uboot booted from MMC/SD => Environment use MMC/SD location
 
+## Embed Environment VIM
+
+UBOOT_ENV_OFFSET=1228800
+UBOOT_ENV_SIZE=0x8000
+UBOOT_ENV_SIZE=32768
+
 ## Other features
 
-    tail -n17 VIM1.u-boot.sd.bin # get meta from image file
+### get meta from image file
 
+    tail -n17 VIM1.u-boot.sd.bin
+
+### PXE FDT overlays example usage
+
+    FDTOVERLAYS   fdt/ethmac_disable.dtbo fdt/pcie_disable.dtbo fdt/vpu_disable.dtbo
+    FDTOVERLAYDIR fdt
+    FDTOVERLAYS   ethmac_disable.dtbo pcie_disable.dtbo vpu_disable.dtbo
+    FDTOVERLAYS   ethmac_disable pcie_disable vpu_disable
