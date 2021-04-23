@@ -17,3 +17,31 @@
 + fully stand-alone
 + auto store uboot env to first fat partition uboot.env file to booted source
 + embed fat partition for sd/mmc images - special for store uboot.env or logo
+
+## Special environment Options
+
+    no_video - disable video
+    no_usb   - disable usb
+
+```
+# Activate
+setenv no_video yes
+setenv no_usb yes
+saveenv
+
+# Deactivate
+setenv no_video
+setenv no_usb
+saveenv
+
+```
+
+## Environment location autodetection
+
++ uboot booted from SPI => Environment use SPI location
++ uboot booted from MMC/SD => Environment use MMC/SD location
+
+## Other features
+
+    tail -n17 VIM1.u-boot.sd.bin # get meta from image file
+
