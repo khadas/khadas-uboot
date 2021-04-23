@@ -1,0 +1,26 @@
+From f3bb42343adf7cb69c7f04ee66bf9e4ff22d3a50 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 22 Apr 2021 11:07:48 +0800
+Subject: [PATCH] add ENV_BAD_CRC_IS_OK option
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ env/env.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/env/env.c b/env/env.c
+index 37b4b54c..7261ded7 100644
+--- a/env/env.c
++++ b/env/env.c
+@@ -206,6 +206,8 @@ int env_load(void)
+ #endif
+ 		} else if (ret == -ENOMSG) {
+ 			/* Handle "bad CRC" case */
++			if (IS_ENABLED(ENV_BAD_CRC_IS_OK))
++				return 0;
+ 			if (best_prio == -1)
+ 				best_prio = prio;
+ 		} else {
+-- 
+2.25.1
+
