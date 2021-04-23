@@ -223,6 +223,8 @@ PKGS_DIR=$(realpath "$PKGS_DIR0")
 echo "[i] auto build"
 
 cd "$BS"
+
+
 UBOOT_DIR="$PWD"
 make_target_deps
 cd -
@@ -237,6 +239,14 @@ make -C"$BS" $DEF_CONFIG
 case $BOARD in
     VIM*)
     cat $RP/../packages/u-boot-mainline/files/overwrite.vims.config >> "$BS/.config"
+    ;;
+esac
+
+case $BOARD in
+    VIM1)
+    ;;
+    VIM*)
+    cat $RP/../packages/u-boot-mainline/files/overwrite.vim23.config >> "$BS/.config"
     ;;
 esac
 
@@ -258,6 +268,17 @@ make -C"$BS" $PJ $@ || FAIL make fail
 
 (
 cd "$BS"
+
+[ -s .version ] || {
+    VER=$(grep U-Boot -m1 .config)
+    VER=${VER##*Boot }
+    VER=${VER%% *}
+    echo "$VER" > .version
+}
+
+VER=$(cat .version)
+echo "[i] U-Boot version: $VER"
+
 UBOOT_DIR="$PWD"
 [ "$MANUAL" ] && \
 make_target
@@ -307,5 +328,6 @@ case $VENDOR in
 
 esac
 
+CMD cp $BS/.version $UBOOT_DIR2/$BOARD.$UBOOT_VERSION
 echo "[i] $BOARD ready"
 exit 0

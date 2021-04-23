@@ -27,8 +27,9 @@ match:		BOARD=VIM1
 match:		BOARD=Edge
 vars:		BOARD=VIM1 VIM2 VIM3 VIM3L Edge
 duration:	2
-desc:		mainline uboot for VIMx and Edge khadas boards.
-    just single uboot usefull for boot up system from sd or USB / PCIe or DHCP TFTP
+desc:		mainline uboot (with custom patches) for VIMx and Edge khadas boards.
+    just single uboot usefull for boot up system from SD/EMMC/SPI-FLASH/USB / PCIe or DHCP TFTP
+    $DESC_ADD
 
 # sub 1
 sub:	1

@@ -15,7 +15,8 @@ cd "$PR" || exit 1
 [ "$BOARDS" ] || \
 BOARDS="VIM1 VIM2 VIM3 VIM3L Edge"
 
-DATE=$(tz= date)
+TIME=$(date +%s)
+DATE=$(tz= date -R -d"@$TIME")
 
 KLABEL="UBOOT"
 klabel="uboot"
@@ -36,6 +37,7 @@ done
 # for CONFIG in $MNT/.*.image.conf $MNT/.meta/.*.image.conf ""; do
 
 KRESQ_CONF=/tmp/.krescue.$KLABEL.image.conf
+DESC_ADD=$(cd $UBOOT_DIR2; grep "" *.version)
 . ./krescue.image.conf.tpl > $KRESQ_CONF
 
 cd $UBOOT_DIR2
