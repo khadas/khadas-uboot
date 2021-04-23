@@ -6,7 +6,7 @@ Subject: [PATCH] add ENV_BAD_CRC_IS_OK option
 Signed-off-by: Artem Lapkin <art@khadas.com>
 ---
  env/env.c | 2 ++
- 1 file changed, 2 insertions(+)
+ 1 file changed, 4 insertions(+)
 
 diff --git a/env/env.c b/env/env.c
 index 37b4b54c..7261ded7 100644
@@ -16,7 +16,7 @@ index 37b4b54c..7261ded7 100644
  #endif
  		} else if (ret == -ENOMSG) {
  			/* Handle "bad CRC" case */
-+			if (IS_ENABLED(ENV_BAD_CRC_IS_OK))
++			if (IS_ENABLED(CONFIG_ENV_BAD_CRC_IS_OK))
 +				return 0;
  			if (best_prio == -1)
  				best_prio = prio;
