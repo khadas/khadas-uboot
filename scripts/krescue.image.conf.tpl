@@ -32,14 +32,33 @@ desc:		mainline uboot (with custom patches) for VIMx and Edge khadas boards.
     $DESC_ADD
 
 # sub 1
-sub:	1
-source:	*.sd.bin
+sub:    1
+source: *.sd.bin
+
+## ask user block
+#ask:     Safe exist partitions?
+#type:    yesno
+#tag:     PARTS_RESTORE
+#tag:     PARTS_SAFE
+#default: 1
+#desc: press YES for safe it, or NO for clean all partitions
+
+TAG_PARTS_SAFE=yes
 
 ## raw data block
 block:  -
 start:  0
-sub:	1
+sub:    1
 data:   %%BOARD%%.u-boot.sd.bin
+
+##END##
+
+## raw data block
+# this way not ready
+block:  -
+sub:    1
+data:   %%BOARD%%.u-boot.sd.bin:444
+data:   %%BOARD%%.u-boot.sd.bin::512:512
 
 ## partition + fs block
 #part:	1
