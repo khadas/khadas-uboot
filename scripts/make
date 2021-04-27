@@ -329,5 +329,6 @@ case $VENDOR in
 esac
 
 CMD cp $BS/.version $UBOOT_DIR2/$BOARD.$UBOOT_VERSION
+CMD rm $UBOOT_DIR2/$BOARD.*.meta
 echo "[i] $BOARD ready"
 exit 0
