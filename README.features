@@ -5,7 +5,7 @@
 + universal series for VIM1 VIM2 VIM3 VIM3L EDGE boards
 + mainline u-boot + patches
 + suitable for SPI - SD - MMC
-+ spi flash - read / write / bootup
++ spi flash - read / write / bootup / env
 + usb kbd
 + usb storages
 + HDMI output
@@ -15,8 +15,8 @@
 + extra commands like `script` `kbi`
 + boot seq SPI => USB => SD => NVME => MMC => PXE => DHCP
 + fully stand-alone
-+ auto store uboot env to first fat partition uboot.env file to booted source
-+ embed fat partition for sd/mmc images - special for store uboot.env or logo
++ embed env suitable for SPI/MMC/SD
++ meta info
 
 ## Special environment Options
 
@@ -47,7 +47,7 @@ UBOOT_ENV_OFFSET=1228800
 UBOOT_ENV_SIZE=0x8000
 UBOOT_ENV_SIZE=32768
 
-NOTE: spi/sd/emmc hafe same env offset ans size
+NOTE: spi/sd/emmc have same env offset and size
 
 ## Other features
 
@@ -55,6 +55,10 @@ NOTE: spi/sd/emmc hafe same env offset ans size
 
     tail -n18 VIM*.u-boot.sd.bin
     tail -n18 VIM*.u-boot.spi.bin
+
+    grep -m1 \#\#UBOOT\#\# -B16 /dev/mmcblk1
+    head -c2m /dev/mmcblk1 | grep -m1 \#\#UBOOT\#\# -B16 # get sd/mmc uboot meta
+    grep -m1 \#\#UBOOT\#\# -B16 /dev/mtdblock0           # get spi uboot meta
 
 ### PXE FDT overlays example usage
 
