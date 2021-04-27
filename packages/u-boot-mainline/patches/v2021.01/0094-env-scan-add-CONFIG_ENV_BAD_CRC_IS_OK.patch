@@ -1,0 +1,26 @@
+From 6312c50b95131d2d488559b9e25c8993e04de6ec Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 26 Apr 2021 16:19:19 +0800
+Subject: [PATCH] CONFIG_ENV_BAD_CRC_IS_OK
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ env/env.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/env/env.c b/env/env.c
+index 37b4b54c..d1afdec3 100644
+--- a/env/env.c
++++ b/env/env.c
+@@ -208,6 +208,8 @@ int env_load(void)
+ 			/* Handle "bad CRC" case */
+ 			if (best_prio == -1)
+ 				best_prio = prio;
++			if (IS_ENABLED(CONFIG_ENV_BAD_CRC_IS_OK))
++				return 0;
+ 		} else {
+ 			debug("Failed (%d)\n", ret);
+ 		}
+-- 
+2.25.1
+
