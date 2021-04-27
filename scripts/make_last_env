@@ -19,6 +19,7 @@ META_ADD=1
 
 #$((4096*300))
 # 2400*512 block
+#UBOOT_MAX_SIZE=0x12c000
 UBOOT_MAX_SIZE=1228800
 UBOOT_ENV_OFFSET=$(printf 0x%X $UBOOT_MAX_SIZE)
 UBOOT_ENV_SIZE=0x2000
@@ -53,14 +54,24 @@ for BOARD in $BOARDS ; do
 	;;
     esac
 
-    UBOOT_FILE_NAME="$BOARD.$UBOOT_SD_MMC0"
-    UBOOT="$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0"
+    for TYPE in sd spi; do
+
+
+    N=u-boot.$TYPE.bin
+    UBOOT_FILE_NAME="$BOARD.$N"
+    UBOOT="$UBOOT_DIR2/$BOARD.$N"
+    [ -s "$UBOOT" ] || continue
     UBOOT_VER=$(cat $UBOOT_DIR2/$BOARD.$UBOOT_VERSION)
 
-    [ -s "$UBOOT" ] || continue
 
     # round pad by 64K
+
+    UBOOT_SIZE=$(grep UBOOT_SIZE $UBOOT.meta 2>/dev/null)
+    [ "$UBOOT_SIZE" ] && UBOOT_SIZE=${UBOOT_SIZE##* }
+    [ "$UBOOT_SIZE" ] || \
     UBOOT_SIZE=$(stat -L -c%s "$UBOOT")
+
+    truncate -s$UBOOT_SIZE "$UBOOT"
 
     echo "[i] uboot $BOARD size $UBOOT_SIZE => $UBOOT_WITH_ENV_SIZE ENV_OFFSET::$UBOOT_ENV_OFFSET + ENV_SIZE: $UBOOT_ENV_SIZE"
 
@@ -72,12 +83,13 @@ for BOARD in $BOARDS ; do
     UBOOT_MD5=$(md5sum "$UBOOT")
     UBOOT_MD5=${UBOOT_MD5%% *}
 
-    truncate -s$UBOOT_WITH_ENV_SIZE "$UBOOT"
+#    truncate -s$UBOOT_WITH_ENV_SIZE "$UBOOT"
+    truncate -s$UBOOT_MAX_SIZE "$UBOOT"
 
     [ "$META_ADD" ] && {
 
 # USAGE
-#tail -n17 VIM2.u-boot.sd.bin
+#tail -n18 VIM2.u-boot.sd.bin
 
     META="
 ##UBOOT_META##
@@ -103,4 +115,7 @@ DOWNLOAD_LAST: https://dl.khadas.com/Firmware/uboot/mainline/
     echo "$META" | tee -a "$UBOOT"
     }
 
+    truncate -s$UBOOT_WITH_ENV_SIZE "$UBOOT"
+
+    done
 done
