@@ -47,11 +47,14 @@ UBOOT_ENV_OFFSET=1228800
 UBOOT_ENV_SIZE=0x8000
 UBOOT_ENV_SIZE=32768
 
+NOTE: spi/sd/emmc hafe same env offset ans size
+
 ## Other features
 
 ### get meta from image file
 
-    tail -n17 VIM1.u-boot.sd.bin
+    tail -n18 VIM*.u-boot.sd.bin
+    tail -n18 VIM*.u-boot.spi.bin
 
 ### PXE FDT overlays example usage
 
