@@ -60,6 +60,14 @@ NOTE: spi/sd/emmc have same env offset and size
     head -c2m /dev/mmcblk1 | grep -m1 \#\#UBOOT\#\# -B16 # get sd/mmc uboot meta
     grep -m1 \#\#UBOOT\#\# -B16 /dev/mtdblock0           # get spi uboot meta
 
+## check online meta examples
+
+    curl https://dl.khadas.com/Firmware/uboot/mainline/VIM2.u-boot.spi.bin.meta
+    curl https://github.com/khadas/khadas-uboot/releases/download/0.10/VIM2.u-boot.sd.bin.meta
+    wget -qO- https://github.com/khadas/khadas-uboot/releases/download/0.10/VIM2.u-boot.spi.bin.meta
+    https://github.com/khadas/khadas-uboot/releases/latest
+
+
 ### PXE FDT overlays example usage
 
     FDTOVERLAYS   fdt/ethmac_disable.dtbo fdt/pcie_disable.dtbo fdt/vpu_disable.dtbo
