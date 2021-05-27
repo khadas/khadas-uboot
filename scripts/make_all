@@ -29,6 +29,11 @@ for D in $CONFIGS ; do
 	exit 1
     }
 
+    [ "$NOP" ] && {
+	echo "[i] NOP mode!!!"
+	continue
+    }
+
     BOARDS=$BOARD ./make_last_env
 
     [ "$VENDOR" = "Amlogic" ] && {
@@ -38,6 +43,8 @@ for D in $CONFIGS ; do
     echo "[i] $BOARD DONE"
 
 done
+
+[ "$NOP" ] && exit
 
 ./make_krescue_image
 ./make_post
