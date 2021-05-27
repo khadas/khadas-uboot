@@ -231,30 +231,57 @@ cd -
 
 #[ -s "$BS/.config" ] || make -C"$BS" $DEF_CONFIG
 
+M(){
+    echo "[i] merge config ${1##*/}"
+    cat "$1" >> "$BS/.config"
+}
+
+C=$RP/../packages/u-boot-mainline/files
+
 [ -s "$BS/.config" ] || {
 make -C"$BS" $DEF_CONFIG
 
-    cat $RP/../packages/u-boot-mainline/files/overwrite.config >> "$BS/.config"
+    M $C/overwrite.config
 
 case $BOARD in
     VIM*)
-    cat $RP/../packages/u-boot-mainline/files/overwrite.vims.config >> "$BS/.config"
+    M $C/overwrite.vims.config
     ;;
 esac
 
 case $BOARD in
     VIM1)
     ;;
-    VIM*)
-    cat $RP/../packages/u-boot-mainline/files/overwrite.vim23.config >> "$BS/.config"
+    *)
+    M $C/overwrite.spi.config
     ;;
 esac
+
+case $BOARD in
+    VIM3*)
+    M $C/overwrite.vim3.config
+    ;;
+    VIM1|VIM2)
+    M $C/overwrite.vim12.config
+    ;;
+    E*)
+    M $C/overwrite.edge.config
+    ;;
+esac
+
+for c in $RP/../packages/u-boot-mainline/files/overwrite.??.config; do
+    [ -s "$c" ] && M $c
+done
 
 # CONFIG_SARADC_MESON=y
 
 }
 
 #rm "$UBOOT_DIR2/$BOARD.$UBOOT_SD_MMC0"
+
+echo make -C"$BS" $PJ olddefconfig
+make -C"$BS" $PJ olddefconfig
+echo make -C"$BS" $PJ $@
 
 make -C"$BS" $PJ $@ || FAIL make fail
 
@@ -329,6 +356,6 @@ case $VENDOR in
 esac
 
 CMD cp $BS/.version $UBOOT_DIR2/$BOARD.$UBOOT_VERSION
-CMD rm $UBOOT_DIR2/$BOARD.*.meta
+CMD rm -f $UBOOT_DIR2/$BOARD.*.meta
 echo "[i] $BOARD ready"
 exit 0
