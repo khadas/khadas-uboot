@@ -1,0 +1,31 @@
+From 29d9790490d01ebe5466e5fe25fb25af5ebf05f9 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 26 Apr 2021 16:19:19 +0800
+Subject: [PATCH] env: add ENV_BAD_CRC_IS_OK option
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ env/Kconfig | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/env/Kconfig b/env/Kconfig
+index 67ce9306..f519c11b 100644
+--- a/env/Kconfig
++++ b/env/Kconfig
+@@ -655,6 +655,13 @@ config ENV_APPEND
+ 	  with newly imported data. This may be used in combination with static
+ 	  flags to e.g. to protect variables which must not be modified.
+ 
++config ENV_BAD_CRC_IS_OK
++	bool "Allow to use current environment driver with bad CRC"
++	default n
++	help
++	  If defined, stop scan other environment driver, and can use current
++	  with bad CRC (default environment)
++
+ config ENV_WRITEABLE_LIST
+ 	bool "Permit write access only to listed variables"
+ 	default n
+-- 
+2.25.1
+

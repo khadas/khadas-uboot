@@ -1,0 +1,28 @@
+From 7de23d79fb734d64b2af8e9b717dd8987a9daeac Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 13:54:35 +0800
+Subject: [PATCH] rk3399_common: setup fdtoverlay_addr_r value
+
+fdtoverlay (pxe_utils) require define fdtoverlay_addr_r env variable
+for example sunxi-common.h meson64.h already have it.
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/rk3399_common.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/configs/rk3399_common.h b/include/configs/rk3399_common.h
+index f0be3830..13d15b1f 100644
+--- a/include/configs/rk3399_common.h
++++ b/include/configs/rk3399_common.h
+@@ -51,6 +51,7 @@
+ 	"script_size_f=0x2000\0" \
+ 	"pxefile_addr_r=0x00600000\0" \
+ 	"fdt_addr_r=0x01f00000\0" \
++	"fdtoverlay_addr_r=0x02000000\0" \
+ 	"kernel_addr_r=0x02080000\0" \
+ 	"ramdisk_addr_r=0x06000000\0" \
+ 	"kernel_comp_addr_r=0x08000000\0" \
+-- 
+2.25.1
+

@@ -1,0 +1,33 @@
+From 8f0ddb858bd6b4c95c555c9cc7d28c4832af02ac Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 20 May 2021 12:11:53 +0800
+Subject: [PATCH] fusb302 rk3399 add init
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ board/rockchip/evb_rk3399/evb-rk3399.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/board/rockchip/evb_rk3399/evb-rk3399.c b/board/rockchip/evb_rk3399/evb-rk3399.c
+index 77428346..92c90836 100644
+--- a/board/rockchip/evb_rk3399/evb-rk3399.c
++++ b/board/rockchip/evb_rk3399/evb-rk3399.c
+@@ -12,6 +12,15 @@
+ #include <power/regulator.h>
+ 
+ #ifndef CONFIG_SPL_BUILD
++int rk_board_late_init(void)
++{
++#if defined CONFIG_POWER_FUSB302
++#include <fusb302.h>
++	fusb302_init();
++#endif
++	return 0;
++}
++
+ int board_early_init_f(void)
+ {
+ 	struct udevice *regulator;
+-- 
+2.25.1
+

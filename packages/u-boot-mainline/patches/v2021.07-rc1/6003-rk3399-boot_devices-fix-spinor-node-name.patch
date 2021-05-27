@@ -1,0 +1,40 @@
+From 8f113e042e0a95ad00f03b8197740398a310d92b Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 26 May 2021 15:33:14 +0800
+Subject: [PATCH] rk3399: boot_devices fix spinor node name
+
+Problem: board_spl_was_booted_from return wrong boot_devices[3] value 
+/spi@ff1d0000 and same-as-spl dont work properly for SPINOR flash
+because arch/arm/mach-rockchip/spl-boot-order.c spl_node_to_boot_device 
+need parse SPINOR flash node as UCLASS_SPI_FLASH
+
+spl-boot-order: same-as-spl > *** BOOT_SOURCE_ID 3 (2:emmc 3:spi 5:sd ...
+/spi@ff1d0000 > board_boot_order: could not map node @618 to a boot-device
+/sdhci@fe330000 > /mmc@fe320000
+
+Solution: just change it to /spi@ff1d0000/flash@0
+
+spl-boot-order: same-as-spl > *** BOOT_SOURCE_ID 3 (2:emmc 3:spi 5:sd ...
+/spi@ff1d0000/flash@0 > /sdhci@fe330000 > /mmc@fe320000
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ arch/arm/mach-rockchip/rk3399/rk3399.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/mach-rockchip/rk3399/rk3399.c b/arch/arm/mach-rockchip/rk3399/rk3399.c
+index 869d2159..69e0c8c2 100644
+--- a/arch/arm/mach-rockchip/rk3399/rk3399.c
++++ b/arch/arm/mach-rockchip/rk3399/rk3399.c
+@@ -28,7 +28,7 @@ DECLARE_GLOBAL_DATA_PTR;
+ 
+ const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
+ 	[BROM_BOOTSOURCE_EMMC] = "/sdhci@fe330000",
+-	[BROM_BOOTSOURCE_SPINOR] = "/spi@ff1d0000",
++	[BROM_BOOTSOURCE_SPINOR] = "/spi@ff1d0000/flash@0",
+ 	[BROM_BOOTSOURCE_SD] = "/mmc@fe320000",
+ };
+ 
+-- 
+2.25.1
+

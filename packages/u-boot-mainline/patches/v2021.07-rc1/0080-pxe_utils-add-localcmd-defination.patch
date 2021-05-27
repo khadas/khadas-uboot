@@ -1,0 +1,202 @@
+From f7352ec4f17aaa6aa611c805cbd68fa417bcf60e Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 4 Mar 2021 14:21:46 +0800
+Subject: [PATCH] [RESEND v1] pxe_utils: add localcmd defination
+
+pxe localboot usage too much limited, i think be useful improve it
+welcome for any suggestions and feedbacks...
+
+1) add localcmd defination which can used with localboot by default
+localboot get from env, now we can define it in pxe script
+2) localcmd can use without localboot - single usage (without kernel)
+3) multiline usage for localcmd
+4) add short alias ! for localcmd
+5) localcmd eval as uboot script (run_command_list)
+6) label + localcmd = simple usage uboot pxe menu with uboot commands
+7) single localcmd restart menu again
+8) localcmd with kernel exec before boot kernel
+9) all logic stay same without any chanages if we dont use localcmd!
+
+Usage examples
+
+# standalone usage
+LABEL update_uboot ${tftp_remote_ip}
+ LOCALCMD	ip=$tftp_remote_ip && tftpboot $ip:boot.scr.uimg && script
+
+LABEL reset
+# multiline usage
+ LOCALCMD	echo RESET
+ LOCALCMD	reset
+
+LABEL reset again
+# multiline alias usage
+ ! echo RESET
+ ! reset
+
+LABEL localboot
+# redefine localcmd for localboot
+ LOCALBOOT 1
+ LOCALCMD	echo temporary redefine localcmd
+
+LABEL linux
+# define bootargs via localcmd
+ KERNEL Image.gz
+ ! setenv bootargs root=/dev/ram0 fdtfile=$fdtfile mac=$ethaddr
+ ! echo kernel params: $bootargs
+
+LABEL linux2
+# redefine bootargs via localcmd
+ KERNEL Image.gz
+ ! setenv bootargs $bootargs tftp_remote_ip=$tftp_remote_ip
+ ! echo kernel params: $bootargs
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+
+---
+v2:
+- split localcmd usage to single and localcmd with kernel
+- single localcmd restart menu again
+v1:
+- fix free(label->localcmd) add proper realloc for multiline localcmd
+---
+ cmd/pxe_utils.c | 48 +++++++++++++++++++++++++++++++++++++++++++++++-
+ cmd/pxe_utils.h |  1 +
+ 2 files changed, 48 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index f1ed671a..e25a0811 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -271,6 +271,9 @@ static void label_destroy(struct pxe_label *label)
+ 	if (label->kernel)
+ 		free(label->kernel);
+ 
++	if (label->localcmd)
++		free(label->localcmd);
++
+ 	if (label->config)
+ 		free(label->config);
+ 
+@@ -322,7 +325,10 @@ static int label_localboot(struct pxe_label *label)
+ {
+ 	char *localcmd;
+ 
+-	localcmd = from_env("localcmd");
++	if (label->localcmd)
++		localcmd = label->localcmd;
++	else
++		localcmd = from_env("localcmd");
+ 
+ 	if (!localcmd)
+ 		return -ENOENT;
+@@ -471,6 +477,11 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 	}
+ 
+ 	if (!label->kernel) {
++		if (label->localcmd) {
++			run_command_list(label->localcmd, strlen(label->localcmd), 0);
++			/* restart menu again */
++			return 2;
++		}
+ 		printf("No kernel given, skipping %s\n",
+ 		       label->name);
+ 		return 1;
+@@ -649,6 +660,9 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 		bootm_argc = 4;
+ 	}
+ 
++	if (label->localcmd)
++		run_command_list(label->localcmd, strlen(label->localcmd), 0);
++
+ 	kernel_addr = genimg_get_kernel_addr(bootm_argv[1]);
+ 	buf = map_sysmem(kernel_addr, 0);
+ 	/* Try bootm for legacy and FIT format image */
+@@ -687,6 +701,8 @@ enum token_type {
+ 	T_APPEND,
+ 	T_INITRD,
+ 	T_LOCALBOOT,
++	T_LOCALCMD,
++	T_LOCALCMD2,
+ 	T_DEFAULT,
+ 	T_PROMPT,
+ 	T_INCLUDE,
+@@ -721,6 +737,8 @@ static const struct token keywords[] = {
+ 	{"kernel", T_KERNEL},
+ 	{"linux", T_LINUX},
+ 	{"localboot", T_LOCALBOOT},
++	{"localcmd", T_LOCALCMD},
++	{"!", T_LOCALCMD2},
+ 	{"append", T_APPEND},
+ 	{"initrd", T_INITRD},
+ 	{"include", T_INCLUDE},
+@@ -1102,6 +1120,7 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 	int len;
+ 	char *s = *c;
+ 	struct pxe_label *label;
++	char *add, *p;
+ 	int err;
+ 
+ 	label = label_create();
+@@ -1177,6 +1196,27 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 			err = parse_integer(c, &label->localboot_val);
+ 			break;
+ 
++		case T_LOCALCMD:
++		case T_LOCALCMD2:
++			if (label->localcmd) {
++				err = parse_sliteral(c, &add);
++				if (err) {
++					p = realloc(label->localcmd,
++						    strlen(label->localcmd) +
++						    strlen(add) + 2);
++					if (p) {
++						label->localcmd = p;
++						sprintf(label->localcmd,
++							"%s\n%s",
++							label->localcmd, add);
++					}
++					free(add);
++				}
++			} else {
++				err = parse_sliteral(c, &label->localcmd);
++			}
++			break;
++
+ 		case T_IPAPPEND:
+ 			err = parse_integer(c, &label->ipappend);
+ 			break;
+@@ -1436,6 +1476,7 @@ void handle_pxe_menu(struct cmd_tbl *cmdtp, struct pxe_menu *cfg)
+ 	struct menu *m;
+ 	int err;
+ 
++	again:
+	if (IS_ENABLED(CONFIG_CMD_BMP)) {
+ 	/* display BMP if available */
+ 	if (cfg->bmp) {
+@@ -1472,6 +1513,11 @@ void handle_pxe_menu(struct cmd_tbl *cmdtp, struct pxe_menu *cfg)
+ 
+ 	if (err == 1) {
+ 		err = label_boot(cmdtp, choice);
++		/* err == 2 means restart this menu again with timeout=0 */
++		if (err == 2) {
++			cfg->timeout=0;
++			goto again;
++		}
+ 		if (!err)
+ 			return;
+ 	} else if (err != -ENOENT) {
+diff --git a/cmd/pxe_utils.h b/cmd/pxe_utils.h
+index bbdc606b..cdac1327 100644
+--- a/cmd/pxe_utils.h
++++ b/cmd/pxe_utils.h
+@@ -49,6 +49,7 @@ struct pxe_label {
+ 	int attempted;
+ 	int localboot;
+ 	int localboot_val;
++	char *localcmd;
+ 	struct list_head list;
+ };
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,56 @@
+From b3458f39789cc741dd7514f59038eb8abe31a4e5 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 1 Mar 2021 13:13:42 +0800
+Subject: [PATCH] no_video no_usb env
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/usb.c             | 5 +++++
+ drivers/core/uclass.c | 8 ++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/cmd/usb.c b/cmd/usb.c
+index b9ec29a8..a3e1f8f4 100644
+--- a/cmd/usb.c
++++ b/cmd/usb.c
+@@ -632,6 +632,11 @@ static int do_usb(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	int i;
+ 	extern char usb_started;
+ 
++	if (env_get("no_usb")){
++	    printf("!no_usb - was defined\n");
++	    return 0;
++	}
++
+ 	if (argc < 2)
+ 		return CMD_RET_USAGE;
+ 
+diff --git a/drivers/core/uclass.c b/drivers/core/uclass.c
+index c3f1b73c..d707383e 100644
+--- a/drivers/core/uclass.c
++++ b/drivers/core/uclass.c
+@@ -11,6 +11,7 @@
+ #include <common.h>
+ #include <dm.h>
+ #include <errno.h>
++#include <env.h>
+ #include <log.h>
+ #include <malloc.h>
+ #include <dm/device.h>
+@@ -565,6 +566,13 @@ int uclass_first_device_err(enum uclass_id id, struct udevice **devp)
+ {
+ 	int ret;
+ 
++	if (id == UCLASS_VIDEO_CONSOLE || id == UCLASS_VIDEO){
++		if (env_get("no_video")) {
++			printf("!no_video - was defined\n");
++			return -ENODEV;
++		}
++	}
++
+ 	ret = uclass_first_device(id, devp);
+ 	if (ret)
+ 		return ret;
+-- 
+2.25.1
+

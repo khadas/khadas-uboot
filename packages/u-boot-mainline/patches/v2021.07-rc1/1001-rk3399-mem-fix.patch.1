@@ -1,0 +1,38 @@
+From d0a61fc08ec1fdef0fabec636df78b6a28caaa3c Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 18 May 2021 12:51:54 +0800
+Subject: [PATCH] rk3399 mem fix
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/rk3399_common.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/include/configs/rk3399_common.h b/include/configs/rk3399_common.h
+index f0be3830..285031f3 100644
+--- a/include/configs/rk3399_common.h
++++ b/include/configs/rk3399_common.h
+@@ -32,7 +32,7 @@
+ #define CONFIG_SPL_BSS_MAX_SIZE         0x10000
+ #endif
+ 
+-#define CONFIG_SYS_BOOTM_LEN	(64 << 20)	/* 64M */
++#define CONFIG_SYS_BOOTM_LEN	(64 << 21)	/* 64M */
+ 
+ /* MMC/SD IP block */
+ #define CONFIG_ROCKCHIP_SDHCI_MAX_FREQ	200000000
+@@ -50,9 +50,9 @@
+ 	"script_offset_f=0xffe000\0" \
+ 	"script_size_f=0x2000\0" \
+ 	"pxefile_addr_r=0x00600000\0" \
+-	"fdt_addr_r=0x01f00000\0" \
++	"fdt_addr_r=0x00f00000\0" \
+ 	"kernel_addr_r=0x02080000\0" \
+-	"ramdisk_addr_r=0x06000000\0" \
++	"ramdisk_addr_r=0x20000000\0" \
+ 	"kernel_comp_addr_r=0x08000000\0" \
+ 	"kernel_comp_size=0x2000000\0"
+ 
+-- 
+2.25.1
+

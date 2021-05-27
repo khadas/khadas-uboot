@@ -22,6 +22,10 @@ PKG_SHA256="6b196b6592fabed060b7c5b1fa05a743f9be131d11389b762b7d0e2beebbd381"
 
 PKG_VERSION=v2021.01-rc5
 PKG_VERSION=v2021.01
+#PKG_VERSION=v2021.04
+PKG_VERSION=v2021.07-rc1
+PKG_VERSION=v2021.07-rc2
+PKG_VERSION=v2021.07-rc3
 PKG_SOURCE_DIR="u-boot-$PKG_VERSION"
 PKG_SOURCE_NAME="u-boot-$PKG_VERSION.tar.gz"
 PKG_URL="$PKG_SITE/archive/$PKG_VERSION.tar.gz"
@@ -91,6 +95,10 @@ make_target() {
 
 post_make_target() {
 
+	[ "$NOPOST" ] && {
+	    echo "[i] no post make"
+	    return 0
+	}
 
 	case "$VENDOR" in
 
@@ -166,16 +174,23 @@ UBOOT_SPI=u-boot.spi.bin
 UBOOT_PAYLOAD=0x40000
 
 [ "$OLD" ] || {
-		echo "[i] inject dtb logo">&2
+#[ "" ] && {
 		D=rk3399-khadas-edge-v.dtb
 		DTS=/tmp/${D%.*}.dts
 		DTB="arch/arm/dts/$D"
 		dtc -q $DTB > $DTS
+
+		grep khadas_logo $DTS || {
+		echo "[i] inject dtb logo">&2
 		LOGO_PATH="$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz" \
 		sh "$PKGS_DIR/$PKG_NAME/files/u-boot.logo.tpl" >> $DTS
 		dtc -q $DTS > $DTB
-		cp $DTB u-boot.dtb
-		dtc -q $BS/u-boot.its > $BS/u-boot.itb
+		#cp $DTB u-boot.dtb
+		( cd $BS
+		dtc -q u-boot.its > u-boot.itb
+		./tools/mkimage -E -f u-boot.its -p 0x0 u-boot.itb
+		)
+		}
 }
 
 [ -d "$BS/tpl" ] && {

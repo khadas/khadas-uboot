@@ -1,0 +1,46 @@
+From 7d2a4ad54f25858fcbd342cca4499c9229deeb41 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 1 Mar 2021 17:02:33 +0800
+Subject: [PATCH] net: tftp: setup tftp_remote_ip and tftp_filename env
+ variables
+
+setup tftp_remote_ip and tftp_filename environment variable for next usage
+
+Problem: no way determinate real filename and remote ip after tftp transfer
+1) serverip can be different from real tftp remote ip 
+2) filename same determined automatically
+
+Example
+
+=> setenv bootfile 192.168.100.80:/ && pxe get
+...
+=> printenv tftp_filename tftp_remote_ip serverip
+tftp_filename=/pxelinux.cfg/default-arm-meson
+tftp_remote_ip=192.168.100.80
+serverip=192.168.100.1
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ net/tftp.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/net/tftp.c b/net/tftp.c
+index 6fdb1a82..448103a1 100644
+--- a/net/tftp.c
++++ b/net/tftp.c
+@@ -798,6 +798,12 @@ void tftp_start(enum proto_t protocol)
+ #endif
+ 	       &tftp_remote_ip, &net_ip);
+ 
++	char tftp_remote_ip_str[22];
++
++	ip_to_string(tftp_remote_ip, tftp_remote_ip_str);
++	env_set("tftp_remote_ip", tftp_remote_ip_str);
++	env_set("tftp_filename", tftp_filename);
++
+ 	/* Check if we need to send across this subnet */
+ 	if (net_gateway.s_addr && net_netmask.s_addr) {
+ 		struct in_addr our_net;
+-- 
+2.25.1
+

@@ -1,0 +1,26 @@
+From 3513ef67bc0260a8f17a3e035951d7fb64120255 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 13:47:44 +0800
+Subject: [PATCH] meson64: fdtoverlay_addr_r fix to save area
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/meson64.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/configs/meson64.h b/include/configs/meson64.h
+index 552a08c2..b759e5bd 100644
+--- a/include/configs/meson64.h
++++ b/include/configs/meson64.h
+@@ -120,7 +120,7 @@
+ 	"scriptaddr=0x08000000\0" \
+ 	"kernel_addr_r=0x08080000\0" \
+ 	"pxefile_addr_r=0x01080000\0" \
+-	"fdtoverlay_addr_r=0x01000000\0" \
++	"fdtoverlay_addr_r=0x08070000\0" \
+ 	"ramdisk_addr_r=0x13000000\0" \
+ 	"fdtfile=amlogic/" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
+ 	BOOTENV
+-- 
+2.25.1
+

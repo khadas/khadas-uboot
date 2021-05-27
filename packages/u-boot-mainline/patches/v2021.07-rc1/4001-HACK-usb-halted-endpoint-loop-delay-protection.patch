@@ -1,0 +1,27 @@
+From 46d6e56e62424f85fd56fa0d3898dbca230d263b Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 12:12:26 +0800
+Subject: [PATCH] HACK: usb halted endpoint loop/delay protection
+
+protection from loops and delays for hanged usb devices
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/usb/host/xhci-ring.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/usb/host/xhci-ring.c b/drivers/usb/host/xhci-ring.c
+index 38850905..a03308c7 100644
+--- a/drivers/usb/host/xhci-ring.c
++++ b/drivers/usb/host/xhci-ring.c
+@@ -228,6 +228,7 @@ static int prepare_ring(struct xhci_ctrl *ctrl, struct xhci_ring *ep_ring,
+ 		return -EINVAL;
+ 	case EP_STATE_HALTED:
+ 		puts("WARN halted endpoint, queueing URB anyway.\n");
++		return -ENOENT;
+ 	case EP_STATE_STOPPED:
+ 	case EP_STATE_RUNNING:
+ 		debug("EP STATE RUNNING.\n");
+-- 
+2.25.1
+

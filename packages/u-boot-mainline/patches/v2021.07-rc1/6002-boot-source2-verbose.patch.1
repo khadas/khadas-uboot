@@ -1,0 +1,32 @@
+From 89b32a6e1407b374e3af1318c0ef6dc483477c08 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 26 May 2021 13:47:36 +0800
+Subject: [PATCH] boot source2 verbose
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ arch/arm/mach-rockchip/spl.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm/mach-rockchip/spl.c b/arch/arm/mach-rockchip/spl.c
+index 5ba2026b..b71b4ffe 100644
+--- a/arch/arm/mach-rockchip/spl.c
++++ b/arch/arm/mach-rockchip/spl.c
+@@ -33,12 +33,14 @@ __weak const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
+ const char *board_spl_was_booted_from(void)
+ {
+ 	u32  bootdevice_brom_id = readl(BROM_BOOTSOURCE_ID_ADDR);
++	u32  bootdevice_brom_id2 = readl(0x01000000);
+ 	const char *bootdevice_ofpath = NULL;
+ 
+ 	// save value+100 to safety mem area 0x01000000
+ 	// for next boot_source usage in uboot stage
+ 	writel(bootdevice_brom_id + 100, 0x01000000);
+ 	printf("*** BOOT_SOURCE_ID %u (2:emmc 3:spi 5:sd ...)***\n", bootdevice_brom_id );
++	printf("*** BOOT_SOURCE_ID2 %u ***\n", bootdevice_brom_id2 );
+ 
+ 	if (bootdevice_brom_id < ARRAY_SIZE(boot_devices))
+ 		bootdevice_ofpath = boot_devices[bootdevice_brom_id];
+-- 
+2.25.1
+

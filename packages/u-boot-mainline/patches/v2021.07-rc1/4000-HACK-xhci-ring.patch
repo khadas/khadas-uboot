@@ -1,0 +1,28 @@
+From 7091173ce89964456906bf5fec67322df5308112 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 30 Apr 2021 18:02:24 +0800
+Subject: [PATCH] HACK xhci-ring reset protection
+
+protection from resetting for hanged usb devices
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/usb/host/xhci-ring.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/host/xhci-ring.c b/drivers/usb/host/xhci-ring.c
+index d708fc92..111a5d29 100644
+--- a/drivers/usb/host/xhci-ring.c
++++ b/drivers/usb/host/xhci-ring.c
+@@ -948,7 +948,7 @@ int xhci_ctrl_tx(struct usb_device *udev, unsigned long pipe,
+ 
+ abort:
+ 	debug("XHCI control transfer timed out, aborting...\n");
+-	abort_td(udev, ep_index);
++//	abort_td(udev, ep_index);
+ 	udev->status = USB_ST_NAK_REC;
+ 	udev->act_len = 0;
+ 	return -ETIMEDOUT;
+-- 
+2.25.1
+

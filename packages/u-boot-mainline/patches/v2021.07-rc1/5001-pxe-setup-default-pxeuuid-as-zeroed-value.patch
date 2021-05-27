@@ -1,0 +1,28 @@
+From 8a5af92a0c0e879c3c20404c6039a0c2f2103ada Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 13:22:58 +0800
+Subject: [PATCH] pxe setup default pxeuuid as zeroed value
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/config_distro_bootcmd.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/config_distro_bootcmd.h b/include/config_distro_bootcmd.h
+index 2257c699..a7b91778 100644
+--- a/include/config_distro_bootcmd.h
++++ b/include/config_distro_bootcmd.h
+@@ -498,7 +498,9 @@
+ 		BOOTENV_SET_VIRTIO_NEED_INIT                              \
+ 		"for target in ${boot_targets}; do "                      \
+ 			"run bootcmd_${target}; "                         \
+-		"done\0"
++		"done\0"						  \
++	"pxeuuid=00000000-0000-0000-0000-000000000000\0"
++
+ 
+ #ifndef CONFIG_BOOTCOMMAND
+ #define CONFIG_BOOTCOMMAND "run distro_bootcmd"
+-- 
+2.25.1
+

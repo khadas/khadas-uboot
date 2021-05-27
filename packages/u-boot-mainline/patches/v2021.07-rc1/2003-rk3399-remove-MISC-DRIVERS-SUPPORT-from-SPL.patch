@@ -1,0 +1,25 @@
+From cbf249e5d5921da762edba5e9369d4d36df9396a Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 20 May 2021 10:00:11 +0800
+Subject: [PATCH] rk3399 remove MISC DRIVERS SUPPORT from SPL
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ arch/arm/mach-rockchip/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm/mach-rockchip/Kconfig b/arch/arm/mach-rockchip/Kconfig
+index 407bf3fb..6fb78ca8 100644
+--- a/arch/arm/mach-rockchip/Kconfig
++++ b/arch/arm/mach-rockchip/Kconfig
+@@ -219,7 +219,6 @@ config ROCKCHIP_RK3399
+ 	select TPL_NEEDS_SEPARATE_STACK if TPL
+ 	select SPL_SEPARATE_BSS
+ 	select SPL_SERIAL_SUPPORT
+-	select SPL_DRIVERS_MISC_SUPPORT
+ 	select CLK
+ 	select FIT
+ 	select PINCTRL
+-- 
+2.25.1
+

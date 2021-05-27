@@ -1,0 +1,39 @@
+From 6b322777068484131c46eb2ee72bed070b7df0a1 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 17 May 2021 12:17:57 +0800
+Subject: [PATCH] VIM3: mmc_get_env_dev correct non emmc boot sources
+
+need return -1 if boot source is not EMMC or SD ( for example it will be
+usefull if we have multy env sources configuration and device was booted
+from SPI flash and env need read from SPI not from mmc )
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ board/amlogic/vim3/vim3.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/board/amlogic/vim3/vim3.c b/board/amlogic/vim3/vim3.c
+index 6cd5f2e1..71aaa0d8 100644
+--- a/board/amlogic/vim3/vim3.c
++++ b/board/amlogic/vim3/vim3.c
+@@ -19,9 +19,15 @@
+ 
+ int mmc_get_env_dev(void)
+ {
+-	if (meson_get_boot_device() == BOOT_DEVICE_EMMC)
++	switch (meson_get_boot_device()) {
++	case BOOT_DEVICE_EMMC:
+ 		return 2;
+-	return 1;
++	case BOOT_DEVICE_SD:
++		return 1;
++	default:
++		/* boot device is not EMMC|SD */
++		return -1;
++	}
+ }
+ 
+ /*
+-- 
+2.25.1
+

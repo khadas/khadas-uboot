@@ -1,0 +1,26 @@
+From 17c1f042248155ea6dcbf23da06d5acfaa30bada Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 18 May 2021 16:31:01 +0800
+Subject: [PATCH] add header for rk_get_boot_device
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ arch/arm/include/asm/arch-rockchip/bootrom.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm/include/asm/arch-rockchip/bootrom.h b/arch/arm/include/asm/arch-rockchip/bootrom.h
+index 0da78f30..eb27b72d 100644
+--- a/arch/arm/include/asm/arch-rockchip/bootrom.h
++++ b/arch/arm/include/asm/arch-rockchip/bootrom.h
+@@ -54,6 +54,8 @@ enum {
+ 
+ extern const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1];
+ 
++int rk_get_boot_device(void);
++
+ /**
+  * Locations of the boot-device identifier in SRAM
+  */
+-- 
+2.25.1
+

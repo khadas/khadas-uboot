@@ -1,0 +1,26 @@
+From 931632c25b4e62c2a7544d4a3b2b274c87f44d98 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 16:48:18 +0800
+Subject: [PATCH] fdt overlay verbose
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index c4e6cabf..98dfdd13 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -433,6 +433,8 @@ static void label_boot_fdtoverlay(struct cmd_tbl *cmdtp, struct pxe_label *label
+ 			goto skip_overlay;
+ 		}
+ 
++		printf("fdt overlay: %s - apply\n", overlayfile);
++
+ skip_overlay:
+ 		if (end)
+ 			free(overlayfile);
+-- 
+2.25.1
+

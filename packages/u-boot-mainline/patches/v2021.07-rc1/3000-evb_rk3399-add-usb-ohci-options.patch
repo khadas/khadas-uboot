@@ -1,0 +1,31 @@
+From 53958599870e8f29a38ecf357ffdbf95cdfdbf00 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 12:54:14 +0800
+Subject: [PATCH] evb_rk3399: add usb ohci options
+
+Problem: not possible to use CONFIG_USB_OHCI_HCD=y and
+CONFIG_USB_OHCI_GENERIC=y options without CONFIG_USB_OHCI_NEW and 
+CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS definations
+
+Add missed definations.
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/evb_rk3399.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/configs/evb_rk3399.h b/include/configs/evb_rk3399.h
+index b7e85037..492b7b4d 100644
+--- a/include/configs/evb_rk3399.h
++++ b/include/configs/evb_rk3399.h
+@@ -15,4 +15,7 @@
+ 
+ #define SDRAM_BANK_SIZE			(2UL << 30)
+ 
++#define CONFIG_USB_OHCI_NEW
++#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS     2
++
+ #endif
+-- 
+2.25.1
+

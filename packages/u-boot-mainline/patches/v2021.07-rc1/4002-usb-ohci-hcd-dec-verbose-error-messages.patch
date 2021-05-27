@@ -1,0 +1,26 @@
+From 5219eb3cfa81bcdade4bdb0715d41e6131d920a3 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 24 May 2021 13:04:49 +0800
+Subject: [PATCH] usb ohci-hcd dec verbose error messages
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/usb/host/ohci-hcd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/host/ohci-hcd.c b/drivers/usb/host/ohci-hcd.c
+index c62d8fee..efd93090 100644
+--- a/drivers/usb/host/ohci-hcd.c
++++ b/drivers/usb/host/ohci-hcd.c
+@@ -1074,7 +1074,7 @@ static void check_status(td_t *td_list)
+ 
+ 	cc = TD_CC_GET(m32_swap(td_list->hwINFO));
+ 	if (cc) {
+-		err(" USB-error: %s (%x)", cc_to_string[cc], cc);
++		debug(" USB-error: %s (%x)", cc_to_string[cc], cc);
+ 
+ 		invalidate_dcache_ed(td_list->ed);
+ 		if (*phwHeadP & m32_swap(0x1)) {
+-- 
+2.25.1
+
