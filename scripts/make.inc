@@ -6,7 +6,7 @@ case $DEF_CONFIG in
     *rk*)
     KHADAS_BOARD=Edge
     VENDOR=Rockchip
-    OLD=1
+#    OLD=1
     ;;
     *vim2_*)
     KHADAS_BOARD=VIM2
