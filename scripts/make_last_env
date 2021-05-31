@@ -122,11 +122,12 @@ DOWNLOAD_LAST: https://dl.khadas.com/Firmware/uboot/mainline/
 ##UBOOT-META##
 ##UBOOT##END#"
 
-    truncate -s-${#META} "$UBOOT"
+    truncate -s-$((${#META}+1)) "$UBOOT"
     echo "$META" | tail -n+2 > "$UBOOT.meta"
     echo "$META" | tee -a "$UBOOT"
     }
 
+    [ "$TYPE" = "spi" ] || \
     truncate -s$UBOOT_WITH_ENV_SIZE "$UBOOT"
 
     done
