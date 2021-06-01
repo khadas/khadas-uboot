@@ -8,6 +8,7 @@
 + spi flash - read / write / bootup / env
 + usb kbd
 + usb storages
++ pcie + nvme storage
 + HDMI output
 + HDMI 4K supported
 + EFI
@@ -47,6 +48,9 @@ UBOOT_ENV_OFFSET=0x140000
 UBOOT_ENV_SIZE=0x8000
 UBOOT_ENV_SIZE=32768
 
+```
+saveenv
+```
 NOTE: spi/sd/emmc have same env offset and size
 
 ## NVME pcie vim3/Edge usage
@@ -62,13 +66,13 @@ prepare
     # activate
     run boot_pci_enum; run nvme_init;
 
-    PCIE-0: Link up (Gen2-x1, Bus0)
+PCIE-0: Link up (Gen2-x1, Bus0)
 
     nvme info
 
-    Device 0: Vendor: 0x2646 Rev: S5Z42105 Prod: 50026B728253D824
-            Type: Hard Disk
-            Capacity: 238475.1 MB = 232.8 GB (488397168 x 512)
+Device 0: Vendor: 0x2646 Rev: S5Z42105 Prod: 50026B728253D824
+Type: Hard Disk
+Capacity: 238475.1 MB = 232.8 GB (488397168 x 512)
 
 ## Other features
 
