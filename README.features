@@ -12,6 +12,8 @@
 + HDMI output
 + HDMI 4K supported
 + EFI
++ syslinux / pxetools
++ boot raw and compressed(gz lzma zstd lzop) kernel
 + embed LOGO splash - easy customize
 + extra commands like `script` `kbi`
 + boot seq SPI => USB => SD => NVME => MMC => PXE => DHCP
@@ -23,16 +25,19 @@
 
     no_video - disable video
     no_usb   - disable usb
+    no_pci   - disable pci
 
 ```
 # Activate
 setenv no_video yes
 setenv no_usb yes
+setenv no_pci yes
 saveenv
 
 # Deactivate
 setenv no_video
 setenv no_usb
+setenv no_pci
 saveenv
 
 ```
@@ -57,10 +62,10 @@ NOTE: spi/sd/emmc have same env offset and size
 
 can bootup from from pcie ( U-Boot 2021.07 )
 
-prepare
+VIM3/VIM3L prepare
 
-    # configure pcie
-    kbi bootmode 1
+    # configure pcie portmode 
+    kbi portmode 1
     kbi poweroff
 
     # activate
@@ -73,6 +78,16 @@ PCIE-0: Link up (Gen2-x1, Bus0)
 Device 0: Vendor: 0x2646 Rev: S5Z42105 Prod: 50026B728253D824
 Type: Hard Disk
 Capacity: 238475.1 MB = 232.8 GB (488397168 x 512)
+
+## setup boot mode under Krescue
+
+main menu -> kbi device configure -> Set Port Mode to PCIe
+
+## Update/Write eMMC U-Boot via Krescue
+
+Advanced -> Experimental -> Update/Write U-Boot by online to EMMC
+
+NOTE: non destructive for mainline linux OS
 
 ## Other features
 
