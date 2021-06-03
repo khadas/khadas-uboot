@@ -27,7 +27,7 @@ index 6c107870..79338426 100644
 +	"test $ll = 1 && bmp display $loadaddr m m || ll=0; " \
 +	"test $ll = 0 && fdt addr $fdtcontroladdr && fdt get addr logoaddr /logo data && bmp display $logoaddr m m && echo [i] display embed logo; "
 +
-+#define PREBOOT_CMD "run load_logo; usb start; kbi init; sleep 1;"
++#define PREBOOT_CMD "run load_logo; usb start; kbi init; test \"$nvme_boot\" = \"\" || kbi portmode r; sleep 1;"
 +
  #define CONFIG_HOSTNAME CONFIG_DEFAULT_DEVICE_TREE
  #define CONFIG_BOOTP_SEND_HOSTNAME 1
