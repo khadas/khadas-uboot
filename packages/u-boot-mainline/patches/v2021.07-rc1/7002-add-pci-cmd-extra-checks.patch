@@ -1,0 +1,38 @@
+From 7724e76b8827e9f327956152499d4c29c9eff0fe Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 3 Jun 2021 13:18:09 +0800
+Subject: [PATCH] add pci cmd extra checks
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pci.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/cmd/pci.c b/cmd/pci.c
+index e53b7c85..1727bb5d 100644
+--- a/cmd/pci.c
++++ b/cmd/pci.c
+@@ -671,6 +671,20 @@ static int do_pci(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	char cmd = 's';
+ 	int ret = 0;
+ 
++	char *port_mode;
++	char *no_pci;
++	no_pci = env_get("no_pci");
++	port_mode = env_get("port_mode");
++	//printf("Pci port_mode:%s no_pci:%s\n", port_mode, no_pci);
++	if (no_pci) {
++	    printf("Pci disabled by no_pci\n");
++	    return 1;
++	}
++	if (!strcmp(port_mode, "1")) {
++	    printf("Pci unusable for current port_mode\n");
++	    return 0;
++	}
++
+ 	if (argc > 1)
+ 		cmd = argv[1][0];
+ 
+-- 
+2.25.1
+

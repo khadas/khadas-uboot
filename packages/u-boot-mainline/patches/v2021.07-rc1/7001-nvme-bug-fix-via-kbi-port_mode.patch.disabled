@@ -1,0 +1,30 @@
+From e082a53c6e3e6980ae3fffdc35abba5702ded0cc Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 3 Jun 2021 12:23:56 +0800
+Subject: [PATCH] nvme bug fix via kbi port_mode
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/config_distro_bootcmd.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/config_distro_bootcmd.h b/include/config_distro_bootcmd.h
+index a7b91778..9160d9bf 100644
+--- a/include/config_distro_bootcmd.h
++++ b/include/config_distro_bootcmd.h
+@@ -200,9 +200,11 @@
+ 		"fi\0" \
+ 	\
+ 	"nvme_boot=" \
++		"if test \"$port_mode\" != 1; then " \
+ 		BOOTENV_RUN_PCI_ENUM \
+ 		BOOTENV_RUN_NVME_INIT \
+-		BOOTENV_SHARED_BLKDEV_BODY(nvme)
++		BOOTENV_SHARED_BLKDEV_BODY(nvme) \
++		" fi\0"
+ #define BOOTENV_DEV_NVME	BOOTENV_DEV_BLKDEV
+ #define BOOTENV_DEV_NAME_NVME	BOOTENV_DEV_NAME_BLKDEV
+ #else
+-- 
+2.25.1
+
