@@ -95,6 +95,8 @@ for BOARD in $BOARDS ; do
     UBOOT_MD5=$(md5sum "$UBOOT")
     UBOOT_MD5=${UBOOT_MD5%% *}
 
+    for CHK_SUM in $(dd if=$UBOOT bs=1M skip=1|md5sum); do break ; done
+
 #    truncate -s$UBOOT_WITH_ENV_SIZE "$UBOOT"
     truncate -s$UBOOT_MAX_SIZE "$UBOOT"
 
@@ -112,6 +114,7 @@ ENV_OFFSET:    $UBOOT_MAX_SIZE
 ENV_SIZE:      $((UBOOT_ENV_SIZE+0))
 SIZE_WITH_ENV: $UBOOT_WITH_ENV_SIZE
 MD5: $UBOOT_MD5
+CHK_SUM: $CHK_SUM
 DATE: $DATE
 TIME: $TIME
 GIT_COM_ID: $GIT_COM_ID
