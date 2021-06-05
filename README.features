@@ -93,12 +93,12 @@ NOTE: non destructive for mainline linux OS
 
 ### get meta from image file
 
-    tail -n18 VIM*.u-boot.sd.bin
-    tail -n18 VIM*.u-boot.spi.bin
+    tail -n19 VIM*.u-boot.sd.bin
+    tail -n19 VIM*.u-boot.spi.bin
 
-    grep -m1 \#\#UBOOT\#\# -B16 /dev/mmcblk1
-    head -c2m /dev/mmcblk1 | grep -m1 \#\#UBOOT\#\# -B16 # get sd/mmc uboot meta
-    grep -m1 \#\#UBOOT\#\# -B16 /dev/mtdblock0           # get spi uboot meta
+    grep -m1 \#\#UBOOT\#\# -B18 /dev/mmcblk1
+    head -c2m /dev/mmcblk1 | grep -m1 \#\#UBOOT\#\# -B18 # get sd/mmc uboot meta
+    grep -m1 \#\#UBOOT\#\# -B18 /dev/mtdblock0           # get spi uboot meta
 
 ## check online meta examples
 
