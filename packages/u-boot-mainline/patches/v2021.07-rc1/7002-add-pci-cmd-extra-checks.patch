@@ -21,11 +21,11 @@ index e53b7c85..1727bb5d 100644
 +	no_pci = env_get("no_pci");
 +	port_mode = env_get("port_mode");
 +	//printf("Pci port_mode:%s no_pci:%s\n", port_mode, no_pci);
-+	if (no_pci) {
++	if (no_pci != NULL) {
 +	    printf("Pci disabled by no_pci\n");
 +	    return 1;
 +	}
-+	if (strcmp(port_mode, "1")) {
++	if (port_mode != NULL && strcmp(port_mode, "1")) {
 +	    printf("Pci unusable for current port_mode\n");
 +	    return 0;
 +	}
