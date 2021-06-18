@@ -1,0 +1,47 @@
+From b9bf15a4924ccda43081f71ff2e7efc9b01a5da4 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 17 Jun 2021 13:02:37 +0800
+Subject: [PATCH] core: uclass: no_video parse
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/core/uclass.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/core/uclass.c b/drivers/core/uclass.c
+index 117d35ac..e173ae92 100644
+--- a/drivers/core/uclass.c
++++ b/drivers/core/uclass.c
+@@ -23,6 +23,11 @@
+ 
+ DECLARE_GLOBAL_DATA_PTR;
+ 
++#if CONFIG_IS_ENABLED(SPL)
++#include <env_internal.h>
++static int no_video = 0;
++#endif
++
+ struct uclass *uclass_find(enum uclass_id key)
+ {
+ 	struct uclass *uc;
+@@ -34,6 +39,17 @@ struct uclass *uclass_find(enum uclass_id key)
+ 	 * node to the start of the list, or creating a linear array mapping
+ 	 * id to node.
+ 	 */
++
++#if CONFIG_IS_ENABLED(SPL)
++	if (key == UCLASS_VIDEO_CONSOLE || key == UCLASS_VIDEO || key == UCLASS_DISPLAY ){
++		if (env_get("no_video") != NULL ) {
++			if (no_video++ < 1)
++				printf("!no_video - was defined\n");
++			return NULL;
++		}
++	}
++#endif
++
+ 	list_for_each_entry(uc, gd->uclass_root, sibling_node) {
+ 		if (uc->uc_drv->id == key)
+ 			return uc;
+-- 
+2.25.1
+

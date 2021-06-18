@@ -1,0 +1,86 @@
+From e0972f2843e34cd0aede9d8a991908aa79709a28 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 17 Jun 2021 12:45:58 +0800
+Subject: [PATCH] cmd: adc improve
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/adc.c | 34 +++++++++++++++++++++++++---------
+ 1 file changed, 25 insertions(+), 9 deletions(-)
+
+diff --git a/cmd/adc.c b/cmd/adc.c
+index 16f914a0..7d5c704b 100644
+--- a/cmd/adc.c
++++ b/cmd/adc.c
+@@ -86,6 +86,11 @@ static int do_adc_single(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		return CMD_RET_FAILURE;
+ 	}
+ 
++	if (argc == 4 ) {
++		env_set_ulong("adc_data", data);
++		return CMD_RET_SUCCESS;
++	}
++
+ 	ret = uclass_get_device_by_name(UCLASS_ADC, argv[1], &dev);
+ 	if (!ret && !adc_raw_to_uV(dev, data, &uV))
+ 		printf("%u, %d uV\n", data, uV);
+@@ -106,13 +111,19 @@ static int do_adc_scan(struct cmd_tbl *cmdtp, int flag, int argc,
+ 	if (argc < 2)
+ 		return CMD_RET_USAGE;
+ 
+-	ret = uclass_get_device_by_name(UCLASS_ADC, argv[1], &dev);
++	if (strcmp(argv[1],"-")) {
++	    ret = uclass_get_device_by_name(UCLASS_ADC, argv[1], &dev);
++	} else {
++	    ret = uclass_first_device_err(UCLASS_ADC, &dev);
++	}
++
+ 	if (ret) {
+ 		pr_err("Can't get the ADC %s: %d\n", argv[1], ret);
+ 		return CMD_RET_FAILURE;
+ 	}
+ 
+ 	switch (argc) {
++	case 4:
+ 	case 3:
+ 		ch_mask = simple_strtoul(argv[2], NULL, 0);
+ 		if (ch_mask)
+@@ -136,10 +147,15 @@ static int do_adc_scan(struct cmd_tbl *cmdtp, int flag, int argc,
+ 	for (chan = 0, i = 0; chan < ADC_MAX_CHANNEL; chan++) {
+ 		if (!(ch_mask & ADC_CHANNEL(chan)))
+ 			continue;
+-		if (!adc_raw_to_uV(dev, ch[i].data, &uV))
+-			printf("[%02d]: %u, %d uV\n", ch[i].id, ch[i].data, uV);
+-		else
+-			printf("[%02d]: %u\n", ch[i].id, ch[i].data);
++
++		if (argc == 4 ) {
++			env_set_ulong("adc_data", ch[i].data);
++		} else {
++			if (!adc_raw_to_uV(dev, ch[i].data, &uV))
++				printf("[%02d]: %u, %d uV\n", ch[i].id, ch[i].data, uV);
++			else
++				printf("[%02d]: %u\n", ch[i].id, ch[i].data);
++		}
+ 		i++;
+ 	}
+ 
+@@ -149,11 +165,11 @@ static int do_adc_scan(struct cmd_tbl *cmdtp, int flag, int argc,
+ static char adc_help_text[] =
+ 	"list - list ADC devices\n"
+ 	"adc info <name> - Get ADC device info\n"
+-	"adc single <name> <channel> - Get Single data of ADC device channel\n"
+-	"adc scan <name> [channel mask] - Scan all [or masked] ADC channels";
++	"adc single <name|-> <channel> [env mode] - Get Single data of ADC device channel\n"
++	"adc scan <name|-> [channel mask] [env mode] - Scan all [or masked] ADC channels";
+ 
+ U_BOOT_CMD_WITH_SUBCMDS(adc, "ADC sub-system", adc_help_text,
+ 	U_BOOT_SUBCMD_MKENT(list, 1, 1, do_adc_list),
+ 	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_adc_info),
+-	U_BOOT_SUBCMD_MKENT(single, 3, 1, do_adc_single),
+-	U_BOOT_SUBCMD_MKENT(scan, 3, 1, do_adc_scan));
++	U_BOOT_SUBCMD_MKENT(single, 4, 1, do_adc_single),
++	U_BOOT_SUBCMD_MKENT(scan, 4, 1, do_adc_scan));
+-- 
+2.25.1
+

@@ -1,7 +1,7 @@
 From b3458f39789cc741dd7514f59038eb8abe31a4e5 Mon Sep 17 00:00:00 2001
 From: Artem Lapkin <art@khadas.com>
 Date: Mon, 1 Mar 2021 13:13:42 +0800
-Subject: [PATCH] no_video no_usb env
+Subject: [PATCH] no_usb env
 
 Signed-off-by: Artem Lapkin <art@khadas.com>
 ---
@@ -25,32 +25,6 @@ index b9ec29a8..a3e1f8f4 100644
  	if (argc < 2)
  		return CMD_RET_USAGE;
  
-diff --git a/drivers/core/uclass.c b/drivers/core/uclass.c
-index c3f1b73c..d707383e 100644
---- a/drivers/core/uclass.c
-+++ b/drivers/core/uclass.c
-@@ -11,6 +11,7 @@
- #include <common.h>
- #include <dm.h>
- #include <errno.h>
-+#include <env.h>
- #include <log.h>
- #include <malloc.h>
- #include <dm/device.h>
-@@ -565,6 +566,13 @@ int uclass_first_device_err(enum uclass_id id, struct udevice **devp)
- {
- 	int ret;
- 
-+	if (id == UCLASS_VIDEO_CONSOLE || id == UCLASS_VIDEO){
-+		if (env_get("no_video")) {
-+			printf("!no_video - was defined\n");
-+			return -ENODEV;
-+		}
-+	}
-+
- 	ret = uclass_first_device(id, devp);
- 	if (ret)
- 		return ret;
 -- 
 2.25.1
 

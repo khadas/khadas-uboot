@@ -1,0 +1,30 @@
+From ea58c8e23fe3a7141181b5a193e0b6effc4e0fca Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 17 Jun 2021 09:53:45 +0800
+Subject: [PATCH] meson64: stdout force to serial
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/meson64.h | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/include/configs/meson64.h b/include/configs/meson64.h
+index 76d9ddc5..116d2d23 100644
+--- a/include/configs/meson64.h
++++ b/include/configs/meson64.h
+@@ -16,12 +16,7 @@
+ #define GICC_BASE			0xc4302000
+ #endif
+ 
+-/* For splashscreen */
+-#ifdef CONFIG_DM_VIDEO
+-#define STDOUT_CFG "vidconsole,serial"
+-#else
+ #define STDOUT_CFG "serial"
+-#endif
+ 
+ #ifdef CONFIG_USB_KEYBOARD
+ #define STDIN_CFG "usbkbd,serial"
+-- 
+2.25.1
+
