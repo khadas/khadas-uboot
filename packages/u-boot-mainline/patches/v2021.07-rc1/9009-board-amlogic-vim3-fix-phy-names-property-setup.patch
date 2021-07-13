@@ -1,0 +1,33 @@
+From 1945582bb07190315d26b169e0b66eaa37efdb76 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 13 Jul 2021 13:30:31 +0800
+Subject: [PATCH] board: amlogic: vim3: fix phy-names property setup
+
+phy-names was improperly implemented resulting in an inoperable USB-OTG port.
+
+- phy-names = "usb2-phy0\0\0usb2-phy1\0";
++ phy-names = "usb2-phy0\0usb2-phy1";
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ board/amlogic/vim3/vim3.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/board/amlogic/vim3/vim3.c b/board/amlogic/vim3/vim3.c
+index c8ebd676..6a67a39c 100644
+--- a/board/amlogic/vim3/vim3.c
++++ b/board/amlogic/vim3/vim3.c
+@@ -109,8 +109,8 @@ int meson_ft_board_setup(void *blob, struct bd_info *bd)
+ 		}
+ 
+ 		/* Update PHY names (mandatory to disable USB3.0) */
+-		len = strlcpy(data, "usb2-phy0", 32) + 1;
+-		len += strlcpy(&data[len], "usb2-phy1", 32 - len) + 1;
++		len = strlcpy(data, "usb2-phy0", 32);
++		len += strlcpy(&data[len], "usb2-phy1", 32 - len);
+ 		ret = fdt_setprop(blob, node, "phy-names", data, len);
+ 		if (ret < 0) {
+ 			printf("vim3: failed to update usb phy names property (%d)\n", ret);
+-- 
+2.25.1
+
