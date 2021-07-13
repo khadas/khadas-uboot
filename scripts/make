@@ -259,7 +259,7 @@ esac
 
 case $BOARD in
     VIM3*)
-    M $C/overwrite.vim3.config
+    M $C/overwrite.vim3x.config
     ;;
     VIM1|VIM2)
     M $C/overwrite.vim12.config
@@ -272,6 +272,8 @@ esac
 for c in $RP/../packages/u-boot-mainline/files/overwrite.??.config; do
     [ -s "$c" ] && M $c
 done
+
+M $C/overwrite.$BOARD.config
 
 # CONFIG_SARADC_MESON=y
 
