@@ -1,0 +1,75 @@
+From e7ba4ecd8729e98bef0786958214d051723a27bd Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 14 Jul 2021 14:58:45 +0800
+Subject: [PATCH] DTB: u-boot: khadas-edge add smbios
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ .../rk3399-khadas-edge-captain-u-boot.dtsi    | 23 +++++++++++++++++++
+ arch/arm/dts/rk3399-khadas-edge-v-u-boot.dtsi | 22 ++++++++++++++++++
+ 2 files changed, 45 insertions(+)
+
+diff --git a/arch/arm/dts/rk3399-khadas-edge-captain-u-boot.dtsi b/arch/arm/dts/rk3399-khadas-edge-captain-u-boot.dtsi
+index ca1bbffb..621d0638 100644
+--- a/arch/arm/dts/rk3399-khadas-edge-captain-u-boot.dtsi
++++ b/arch/arm/dts/rk3399-khadas-edge-captain-u-boot.dtsi
+@@ -4,3 +4,26 @@
+  */
+ 
+ #include "rk3399-khadas-edge-u-boot.dtsi"
++
++/ {
++	smbios {
++		compatible = "u-boot,sysinfo-smbios";
++
++		smbios {
++			system {
++				manufacturer = "khadas";
++				product = "edge";
++			};
++
++			baseboard {
++				manufacturer = "khadas";
++				product = "edge";
++			};
++
++			chassis {
++				manufacturer = "khadas";
++				product = "edge";
++			};
++		};
++	};
++};
+diff --git a/arch/arm/dts/rk3399-khadas-edge-v-u-boot.dtsi b/arch/arm/dts/rk3399-khadas-edge-v-u-boot.dtsi
+index ca1bbffb..221a7447 100644
+--- a/arch/arm/dts/rk3399-khadas-edge-v-u-boot.dtsi
++++ b/arch/arm/dts/rk3399-khadas-edge-v-u-boot.dtsi
+@@ -4,3 +4,25 @@
+  */
+ 
+ #include "rk3399-khadas-edge-u-boot.dtsi"
++/ {
++	smbios {
++		compatible = "u-boot,sysinfo-smbios";
++
++		smbios {
++			system {
++				manufacturer = "khadas";
++				product = "edge";
++			};
++
++			baseboard {
++				manufacturer = "khadas";
++				product = "edge";
++			};
++
++			chassis {
++				manufacturer = "khadas";
++				product = "edge";
++			};
++		};
++	};
++};
+-- 
+2.25.1
+
