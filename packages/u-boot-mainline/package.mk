@@ -107,6 +107,7 @@ post_make_target() {
 
 		Amlogic)
 
+
 		# add embed uboot khadas logo
 		# cat u-boot-nodtb.bin u-boot.dtb "$PKGS_DIR/$PKG_NAME/files/splash.bmp.gz" > u-boot.bin
 		# new safe method
@@ -125,8 +126,12 @@ post_make_target() {
 
 			VIM1|VIM2)
 
+			for python in python python2 python3 ; do
+			which $python && break
+			done
+
 			fip/blx_fix.sh fip/bl30.bin fip/zero_tmp fip/bl30_zero.bin fip/bl301.bin fip/bl301_zero.bin fip/bl30_new.bin bl30
-			python fip/acs_tool.pyc fip/bl2.bin fip/bl2_acs.bin fip/acs.bin 0
+			$python fip/acs_tool.pyc fip/bl2.bin fip/bl2_acs.bin fip/acs.bin 0 || return 1
 			fip/blx_fix.sh fip/bl2_acs.bin fip/zero_tmp fip/bl2_zero.bin fip/bl21.bin fip/bl21_zero.bin fip/bl2_new.bin bl2
 			fip/aml_encrypt_gxl --bl3enc --input fip/bl30_new.bin
 			fip/aml_encrypt_gxl --bl3enc --input fip/bl31.img
