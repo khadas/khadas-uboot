@@ -1,0 +1,141 @@
+From 9a65fa51b2a13f6299a750ae88e7a98cf51c77cc Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 14 Jul 2021 14:49:35 +0800
+Subject: [PATCH] DTB: u-boot: meson: khadas add smbios
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ .../meson-g12b-a311d-khadas-vim3-u-boot.dtsi  | 23 +++++++++++++++++++
+ .../meson-gxl-s905x-khadas-vim-u-boot.dtsi    | 23 +++++++++++++++++++
+ .../arm/dts/meson-gxm-khadas-vim2-u-boot.dtsi | 21 +++++++++++++++++
+ .../dts/meson-sm1-khadas-vim3l-u-boot.dtsi    | 23 +++++++++++++++++++
+ 4 files changed, 90 insertions(+)
+
+diff --git a/arch/arm/dts/meson-g12b-a311d-khadas-vim3-u-boot.dtsi b/arch/arm/dts/meson-g12b-a311d-khadas-vim3-u-boot.dtsi
+index 489efa15..fcd6f053 100644
+--- a/arch/arm/dts/meson-g12b-a311d-khadas-vim3-u-boot.dtsi
++++ b/arch/arm/dts/meson-g12b-a311d-khadas-vim3-u-boot.dtsi
+@@ -6,3 +6,26 @@
+ 
+ #include "meson-g12-common-u-boot.dtsi"
+ #include "meson-khadas-vim3-u-boot.dtsi"
++
++/ {
++	smbios {
++		compatible = "u-boot,sysinfo-smbios";
++
++		smbios {
++			system {
++				manufacturer = "khadas";
++				product = "vim3";
++			};
++
++			baseboard {
++				manufacturer = "khadas";
++				product = "vim3";
++			};
++
++			chassis {
++				manufacturer = "khadas";
++				product = "vim3";
++			};
++		};
++	};
++};
+diff --git a/arch/arm/dts/meson-gxl-s905x-khadas-vim-u-boot.dtsi b/arch/arm/dts/meson-gxl-s905x-khadas-vim-u-boot.dtsi
+index 39270ea7..20e36d1b 100644
+--- a/arch/arm/dts/meson-gxl-s905x-khadas-vim-u-boot.dtsi
++++ b/arch/arm/dts/meson-gxl-s905x-khadas-vim-u-boot.dtsi
+@@ -5,3 +5,26 @@
+  */
+ 
+ #include "meson-gxl-u-boot.dtsi"
++
++/ {
++	smbios {
++		compatible = "u-boot,sysinfo-smbios";
++
++		smbios {
++			system {
++				manufacturer = "khadas";
++				product = "vim";
++			};
++
++			baseboard {
++				manufacturer = "khadas";
++				product = "vim";
++			};
++
++			chassis {
++				manufacturer = "khadas";
++				product = "vim";
++			};
++		};
++	};
++};
+diff --git a/arch/arm/dts/meson-gxm-khadas-vim2-u-boot.dtsi b/arch/arm/dts/meson-gxm-khadas-vim2-u-boot.dtsi
+index c1763336..41480c9a 100644
+--- a/arch/arm/dts/meson-gxm-khadas-vim2-u-boot.dtsi
++++ b/arch/arm/dts/meson-gxm-khadas-vim2-u-boot.dtsi
+@@ -10,6 +10,27 @@
+ 	aliases {
+ 		spi0 = &spifc;
+ 	};
++
++	smbios {
++		compatible = "u-boot,sysinfo-smbios";
++
++		smbios {
++			system {
++				manufacturer = "khadas";
++				product = "vim2";
++			};
++
++			baseboard {
++				manufacturer = "khadas";
++				product = "vim2";
++			};
++
++			chassis {
++				manufacturer = "khadas";
++				product = "vim2";
++			};
++		};
++	};
+ };
+ 
+ &sd_emmc_c {
+diff --git a/arch/arm/dts/meson-sm1-khadas-vim3l-u-boot.dtsi b/arch/arm/dts/meson-sm1-khadas-vim3l-u-boot.dtsi
+index a591c0c9..06b81f23 100644
+--- a/arch/arm/dts/meson-sm1-khadas-vim3l-u-boot.dtsi
++++ b/arch/arm/dts/meson-sm1-khadas-vim3l-u-boot.dtsi
+@@ -6,3 +6,26 @@
+ 
+ #include "meson-sm1-u-boot.dtsi"
+ #include "meson-khadas-vim3-u-boot.dtsi"
++
++/ {
++	smbios {
++		compatible = "u-boot,sysinfo-smbios";
++
++		smbios {
++			system {
++				manufacturer = "khadas";
++				product = "vim3l";
++			};
++
++			baseboard {
++				manufacturer = "khadas";
++				product = "vim3l";
++			};
++
++			chassis {
++				manufacturer = "khadas";
++				product = "vim3l";
++			};
++		};
++	};
++};
+-- 
+2.25.1
+
