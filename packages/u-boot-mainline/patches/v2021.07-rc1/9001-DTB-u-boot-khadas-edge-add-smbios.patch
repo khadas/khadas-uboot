@@ -25,17 +25,17 @@ index ca1bbffb..621d0638 100644
 +		smbios {
 +			system {
 +				manufacturer = "khadas";
-+				product = "edge";
++				product = "Edge";
 +			};
 +
 +			baseboard {
 +				manufacturer = "khadas";
-+				product = "edge";
++				product = "Edge";
 +			};
 +
 +			chassis {
 +				manufacturer = "khadas";
-+				product = "edge";
++				product = "Edge";
 +			};
 +		};
 +	};
@@ -55,17 +55,17 @@ index ca1bbffb..221a7447 100644
 +		smbios {
 +			system {
 +				manufacturer = "khadas";
-+				product = "edge";
++				product = "Edge";
 +			};
 +
 +			baseboard {
 +				manufacturer = "khadas";
-+				product = "edge";
++				product = "Edge";
 +			};
 +
 +			chassis {
 +				manufacturer = "khadas";
-+				product = "edge";
++				product = "Edge";
 +			};
 +		};
 +	};

@@ -27,17 +27,17 @@ index 489efa15..fcd6f053 100644
 +		smbios {
 +			system {
 +				manufacturer = "khadas";
-+				product = "vim3";
++				product = "VIM3";
 +			};
 +
 +			baseboard {
 +				manufacturer = "khadas";
-+				product = "vim3";
++				product = "VIM3";
 +			};
 +
 +			chassis {
 +				manufacturer = "khadas";
-+				product = "vim3";
++				product = "VIM3";
 +			};
 +		};
 +	};
@@ -58,17 +58,17 @@ index 39270ea7..20e36d1b 100644
 +		smbios {
 +			system {
 +				manufacturer = "khadas";
-+				product = "vim";
++				product = "VIM";
 +			};
 +
 +			baseboard {
 +				manufacturer = "khadas";
-+				product = "vim";
++				product = "VIM";
 +			};
 +
 +			chassis {
 +				manufacturer = "khadas";
-+				product = "vim";
++				product = "VIM";
 +			};
 +		};
 +	};
@@ -88,17 +88,17 @@ index c1763336..41480c9a 100644
 +		smbios {
 +			system {
 +				manufacturer = "khadas";
-+				product = "vim2";
++				product = "VIM2";
 +			};
 +
 +			baseboard {
 +				manufacturer = "khadas";
-+				product = "vim2";
++				product = "VIM2";
 +			};
 +
 +			chassis {
 +				manufacturer = "khadas";
-+				product = "vim2";
++				product = "VIM2";
 +			};
 +		};
 +	};
@@ -121,17 +121,17 @@ index a591c0c9..06b81f23 100644
 +		smbios {
 +			system {
 +				manufacturer = "khadas";
-+				product = "vim3l";
++				product = "VIM3L";
 +			};
 +
 +			baseboard {
 +				manufacturer = "khadas";
-+				product = "vim3l";
++				product = "VIM3L";
 +			};
 +
 +			chassis {
 +				manufacturer = "khadas";
-+				product = "vim3l";
++				product = "VIM3L";
 +			};
 +		};
 +	};
