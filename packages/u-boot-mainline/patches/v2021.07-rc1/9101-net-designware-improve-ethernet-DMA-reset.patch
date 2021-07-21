@@ -1,0 +1,44 @@
+From 6318d121d7c604f128926650f6857b6dd12a2a0a Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 21 Jul 2021 12:44:17 +0800
+Subject: [PATCH] net: designware: improve ethernet DMA reset
+
+Problem: uboot ethernet always have "DMA reset timeout" after
+linux usage, detected on VIM2 VIM3 VIM3L amlogic devices,
+mainline uboot and mainline linux > 5.1? .
+
+How-to reproduce:
+
+1) Poweron device => ethernet uboot work fine.
+2) Linux start and ethernet interface up and same works.
+3) Reboot to uboot again and we cant use ethernet anymore.
+uboot always have "DMA reset timeout" inside designware_eth_init()
+only poweroff/poweron cycle can solve this problem.
+
+Solution: add phy_reset() into waiting DMA reset cycle,
+this insertion doesn't break normal behaviour (maybe).
+
+Note: same need explore real problem why its happens! because this 
+patch may be just hack.
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/net/designware.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/net/designware.c b/drivers/net/designware.c
+index 5d92257e..4433abe9 100644
+--- a/drivers/net/designware.c
++++ b/drivers/net/designware.c
+@@ -389,6 +389,8 @@ int designware_eth_init(struct dw_eth_dev *priv, u8 *enetaddr)
+ 			printf("DMA reset timeout\n");
+ 			return -ETIMEDOUT;
+ 		}
++		// forced phy reset can help with DMAMAC_SRST
++		phy_reset(priv->phydev);
+ 
+ 		mdelay(100);
+ 	};
+-- 
+2.25.1
+
