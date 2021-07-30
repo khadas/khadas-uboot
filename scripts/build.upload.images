@@ -1,0 +1,41 @@
+#!/bin/sh
+
+## hyphop ##
+
+#= upload builded images
+
+## USAGE: ./build.sdfs
+
+echo "[i] UPLOAD IMAGES to server">&2
+
+NOOP=
+
+for a in "$@"; do
+    case $a in
+	yes)
+	YES=1
+	;;
+	test|-n)
+        NOOP=-n
+	YES=1
+	;;
+	new)
+	SERVER=storage@downloads.khadas.com
+	YES=1
+	;;
+	*@*)
+	SERVER="$a"
+	;;
+    esac
+done
+
+[ "$SERVER" ] || \
+    SERVER=storage@dl.khadas.com
+
+CMD="rsync -av $NOOP --progress \
+--inplace \
+/tmp/u-boot-mainline/. $SERVER:/storage/Firmware/uboot/mainline/"
+
+echo "# $CMD">&2
+
+[ "$YES" ] && $CMD
