@@ -1,0 +1,26 @@
+From c3522c7afa96fdc2ad1e6bace9fb78b1c465a2cc Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 3 Aug 2021 15:48:09 +0800
+Subject: [PATCH] EFI: console: fix multyplex query_vidconsole
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ lib/efi_loader/efi_console.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/efi_loader/efi_console.c b/lib/efi_loader/efi_console.c
+index 7f916ce6..64f55852 100644
+--- a/lib/efi_loader/efi_console.c
++++ b/lib/efi_loader/efi_console.c
+@@ -319,7 +319,7 @@ static int __maybe_unused query_vidconsole(int *rows, int *cols)
+ 	struct udevice *dev;
+ 	struct vidconsole_priv *priv;
+ 
+-	if (!stdout_name || strncmp(stdout_name, "vidconsole", 10))
++	if (!stdout_name || strstr(stdout_name, "vidconsole") == NULL)
+ 		return -ENODEV;
+ 	stdout_dev = stdio_get_by_name("vidconsole");
+ 	if (!stdout_dev)
+-- 
+2.25.1
+
