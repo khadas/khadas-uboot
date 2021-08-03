@@ -1,0 +1,39 @@
+From 36a599369169054b4ed7b71dc19dfa4e126d3aee Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 3 Aug 2021 09:40:43 +0800
+Subject: [PATCH] EFI: console: query console size: multiplex adaptation
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ lib/efi_loader/efi_console.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/lib/efi_loader/efi_console.c b/lib/efi_loader/efi_console.c
+index 3b012e1a..aa41ba7d 100644
+--- a/lib/efi_loader/efi_console.c
++++ b/lib/efi_loader/efi_console.c
+@@ -340,13 +340,15 @@ static int __maybe_unused query_vidconsole(int *rows, int *cols)
+ static void query_console_size(void)
+ {
+ 	int rows = 25, cols = 80;
+-	int ret = -ENODEV;
+ 
+-	if (IS_ENABLED(CONFIG_DM_VIDEO))
+-		ret = query_vidconsole(&rows, &cols);
+-	if (ret)
+-		ret = query_console_serial(&rows, &cols);
+-	if (ret)
++	if (IS_ENABLED(CONFIG_DM_VIDEO) &&
++	    !query_vidconsole(&rows, &cols)) {
++		int rows_serial, cols_serial;
++		if (!query_console_serial(&rows_serial, &cols_serial)) {
++			rows=min(rows,rows_serial);
++			cols=min(cols,cols_serial);
++		}
++	} else if (query_console_serial(&rows, &cols))
+ 		return;
+ 
+ 	/* Test if we can have Mode 1 */
+-- 
+2.25.1
+
