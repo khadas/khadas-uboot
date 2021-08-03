@@ -1,0 +1,29 @@
+From 4fc97de728db5d2bb633a8161542a1fd364d6ada Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 3 Aug 2021 12:00:46 +0800
+Subject: [PATCH 2/2] EFI: console: setup max rows and cols
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ lib/efi_loader/efi_console.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lib/efi_loader/efi_console.c b/lib/efi_loader/efi_console.c
+index 526d8afe..7f916ce6 100644
+--- a/lib/efi_loader/efi_console.c
++++ b/lib/efi_loader/efi_console.c
+@@ -357,6 +357,11 @@ static void query_console_size(void)
+ 	} else if (query_console_serial(&rows, &cols))
+ 		return;
+ 
++	if (CONFIG_EFI_CONSOLE_MAX_ROWS > 0 )
++		rows=min(rows, CONFIG_EFI_CONSOLE_MAX_ROWS);
++	if (CONFIG_EFI_CONSOLE_MAX_COLS > 0 )
++		cols=min(cols, CONFIG_EFI_CONSOLE_MAX_COLS);
++
+ 	/* Test if we can have Mode 1 */
+ 	if (cols >= 80 && rows >= 50) {
+ 		efi_cout_modes[1].present = 1;
+-- 
+2.25.1
+
