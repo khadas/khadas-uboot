@@ -26,7 +26,7 @@ index aa41ba7d..526d8afe 100644
  	pos = buf;
  	utf16_utf8_strcpy(&pos, string);
 +#ifdef CONFIG_EFI_CONSOLE_UTF_BLOCK
-+	fputs(stdout, strlen(buf) > 1 && vidconsole_active ? "." : buf);
++	fputc(stdout, strlen(buf) > 1 && vidconsole_active ? '.' : buf[0]);
 +#else
  	fputs(stdout, buf);
 +#endif
