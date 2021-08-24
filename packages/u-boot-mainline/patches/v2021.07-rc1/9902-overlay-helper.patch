@@ -1,0 +1,190 @@
+From 0a1cf3ef89b78f64bd8233760c03ec9a3d0d7769 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 17 Aug 2021 17:45:05 +0800
+Subject: [PATCH] overlay helper
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 108 +++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 102 insertions(+), 6 deletions(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index a93e5048..a6628360 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -7,6 +7,7 @@
+ #include <common.h>
+ #include <command.h>
+ #include <env.h>
++#include <env_internal.h>
+ #include <image.h>
+ #include <log.h>
+ #include <malloc.h>
+@@ -352,15 +353,27 @@ static int label_localboot(struct pxe_label *label)
+ #ifdef CONFIG_OF_LIBFDT_OVERLAY
+ static void label_boot_fdtoverlay(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ {
+-	char *fdtoverlay = label->fdtoverlays;
+ 	struct fdt_header *working_fdt;
+ 	char *fdtoverlay_addr_env;
++	char *fdtoverlay, *fdtoverlay_dir;
+ 	ulong fdtoverlay_addr;
+ 	ulong fdt_addr;
+ 	int err;
+ 	char overlayext[] = ".dtbo";
+ 	char path[MAX_TFTP_PATH_LEN + 1];
+ 
++	fdtoverlay = label->fdtoverlays;
++	fdtoverlay_dir = env_get("fdt_overlays_dir");
++
++	if (!fdtoverlay)
++		fdtoverlay = env_get("fdt_overlays");
++
++	if (!fdtoverlay)
++		return;
++
++	if (!fdtoverlay_dir)
++		fdtoverlay_dir = label->fdtoverlaydir;
++
+ 	/* Get the main fdt and map it */
+ 	fdt_addr = simple_strtoul(env_get("fdt_addr_r"), NULL, 16);
+ 	working_fdt = map_sysmem(fdt_addr, 0);
+@@ -403,15 +416,15 @@ static void label_boot_fdtoverlay(struct cmd_tbl *cmdtp, struct pxe_label *label
+ 
+ 		/* make overlay path */
+ 		sprintf(path, "%s%s%s%s",
+-			label->fdtoverlaydir ? label->fdtoverlaydir : "",
+-			label->fdtoverlaydir ? "/" : "",
++			fdtoverlay_dir ? fdtoverlay_dir : "",
++			fdtoverlay_dir ? "/" : "",
+ 			overlayfile,
+-			strstr(fdtoverlay, overlayext) ? "" : overlayext);
++			strstr(overlayfile, overlayext) ? "" : overlayext);
+ 
+ 		/* Load overlay file */
+ 		err = get_relfile_envaddr(cmdtp, path, "fdtoverlay_addr_r");
+ 		if (err < 0) {
+-			printf("Failed loading overlay %s\n", overlayfile);
++			printf("Failed loading overlay '%s'\n", overlayfile);
+ 			goto skip_overlay;
+ 		}
+ 
+@@ -440,6 +453,85 @@ skip_overlay:
+ 			free(overlayfile);
+ 	} while ((fdtoverlay = strstr(fdtoverlay, " ")));
+ }
++
++static void fdt_overlay_helper(struct cmd_tbl *cmdtp, struct pxe_label
++			      *label, char *fdtfile)
++{
++	char *overlay_dir_ext = ".overlays";
++	char *overlay_env_ext = ".overlay.env";
++	char *overlay_vars[] = { "fdt_overlays", "fdt_overlays_dir" };
++	char *overlay_env = NULL;
++	char *overlay_dir = NULL;
++	unsigned long addr, file_size = 0;
++	int len;
++
++	char *fdtoverlay_addr_r = env_get("fdtoverlay_addr_r");
++	if (!fdtoverlay_addr_r)
++		return;
++
++	len = strlen(fdtfile) + strlen(overlay_env_ext) + 1;
++	overlay_env = malloc(len);
++	if (!overlay_env)
++		goto cleanup;
++
++	snprintf(overlay_env, len, "%s%s", fdtfile, overlay_env_ext);
++	if (!get_relfile_envaddr(cmdtp, overlay_env, "fdtoverlay_addr_r"))
++		goto cleanup;
++
++	if (strict_strtoul(from_env("filesize"), 16, &file_size))
++		goto cleanup;
++
++	if (file_size < 1)
++		goto cleanup;
++
++	len = strlen(fdtfile) + strlen(overlay_dir_ext) + 1;
++	overlay_dir = malloc(len);
++	if (!overlay_dir)
++		goto cleanup;
++
++	snprintf(overlay_dir, len, "%s%s", fdtfile, overlay_dir_ext);
++
++	env_set("fdt_overlays_dir", label->fdtoverlaydir);
++	env_set("fdt_overlays", NULL);
++
++	addr = simple_strtoul(fdtoverlay_addr_r, NULL, 16);
++
++	if (!himport_r(&env_htab, map_sysmem(addr , 0), file_size,
++		       '\n', H_NOCLEAR, 0, 2, overlay_vars))
++		goto cleanup;
++
++	char *fdt_overlays = env_get("fdt_overlays");
++
++	if (!fdt_overlays)
++		goto cleanup;
++
++	char *fdt_overlays_dir = env_get("fdt_overlays_dir");
++
++	if (!fdt_overlays_dir) {
++		len = strlen(fdtfile) + strlen(overlay_dir_ext) + 1;
++		overlay_dir = malloc(len);
++		if (!overlay_dir)
++			goto cleanup;
++
++		fdt_overlays_dir = overlay_dir;
++		snprintf(overlay_dir, len, "%s%s", fdtfile, overlay_dir_ext);
++		env_set("fdt_overlays_dir", overlay_dir);
++	}
++
++	printf("%s: %s\n %s: %s\n", __func__, overlay_env,
++	       fdt_overlays_dir ? fdt_overlays_dir: "", fdt_overlays);
++
++	label_boot_fdtoverlay(cmdtp, label);
++
++cleanup:
++	if (overlay_env)
++		free(overlay_env);
++	if (overlay_dir)
++		free(overlay_dir);
++
++	env_set("fdt_overlays_dir", NULL);
++	env_set("fdt_overlays", NULL);
++}
+ #endif
+ 
+ /*
+@@ -650,13 +742,13 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 			int err = get_relfile_envaddr(cmdtp, fdtfile,
+ 						      "fdt_addr_r");
+ 
+-			free(fdtfilefree);
+ 			if (err < 0) {
+ 				bootm_argv[3] = NULL;
+ 
+ 				if (label->fdt) {
+ 					printf("Skipping %s for failure retrieving FDT\n",
+ 					       label->name);
++					free(fdtfilefree);
+ 					goto cleanup;
+ 				}
+ 			}
+@@ -664,10 +756,14 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ #ifdef CONFIG_OF_LIBFDT_OVERLAY
+ 			if (label->fdtoverlays)
+ 				label_boot_fdtoverlay(cmdtp, label);
++			else
++				fdt_overlay_helper(cmdtp, label, fdtfile);
+ #endif
+ 		} else {
+ 			bootm_argv[3] = NULL;
+ 		}
++		if (fdtfilefree)
++			free(fdtfilefree);
+ 	}
+ 
+ 	if (!bootm_argv[3])
+-- 
+2.25.1
+
