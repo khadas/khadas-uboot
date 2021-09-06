@@ -1,0 +1,33 @@
+From e59a697ef6931d83f63a3cedb7b7b527be487ced Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 25 Aug 2021 10:21:58 +0800
+Subject: [PATCH] pxe fail replace from skip to loop
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index a6628360..cf8fba80 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -1630,12 +1630,12 @@ void handle_pxe_menu(struct cmd_tbl *cmdtp, struct pxe_menu *cfg)
+ 	if (err == 1) {
+ 		err = label_boot(cmdtp, choice);
+ 		/* err == 2 means restart this menu again with timeout=0 */
+-		if (err == 2) {
++		if (err) {
+ 			cfg->timeout=0;
+ 			goto again;
+-		}
+-		if (!err)
++		} else {
+ 			return;
++		}
+ 	} else if (err != -ENOENT) {
+ 		return;
+ 	}
+-- 
+2.25.1
+
