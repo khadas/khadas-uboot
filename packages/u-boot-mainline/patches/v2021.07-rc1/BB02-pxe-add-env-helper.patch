@@ -1,0 +1,122 @@
+From afa9356e43dd460810757278cefb37c0f1b92871 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 6 Sep 2021 11:51:47 +0800
+Subject: [PATCH] pxe: add env helper
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 81 ++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 57 insertions(+), 24 deletions(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index cf8fba80..2d181290 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -313,6 +313,29 @@ static void label_print(void *data)
+ 	printf("%s:\t%s\n", label->num, c);
+ }
+ 
++static void env_helper(struct cmd_tbl *cmdtp, struct pxe_label *label)
++{
++	char *buf;
++	char *env_file = "uEnv.txt";
++	char *env_addr = env_get("scriptaddr");
++	unsigned long addr, file_size = 0;
++
++	if (!env_addr)
++		return;
++	if (strict_strtoul(env_addr, 16, &addr) < 0)
++		return;
++	if (get_relfile(cmdtp, env_file, addr) < 0)
++		return;
++	if (strict_strtoul(from_env("filesize"), 16, &file_size))
++		return;
++	if (file_size < 1)
++		return;
++
++	printf("Import user vars: %s %ld bytes\n", env_file, file_size);
++	buf = map_sysmem(addr , 0);
++	himport_r(&env_htab, buf, file_size, '\n', H_NOCLEAR, 0, 0, NULL);
++}
++
+ /*
+  * Boot a label that specified 'localboot'. This requires that the 'localcmd'
+  * environment variable is defined. Its contents will be executed as U-Boot
+@@ -622,30 +645,6 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 		}
+ 	}
+ 
+-	if ((label->ipappend & 0x3) || label->append) {
+-		char bootargs[CONFIG_SYS_CBSIZE] = "";
+-		char finalbootargs[CONFIG_SYS_CBSIZE];
+-
+-		if (strlen(label->append ?: "") +
+-		    strlen(ip_str) + strlen(mac_str) + 1 > sizeof(bootargs)) {
+-			printf("bootarg overflow %zd+%zd+%zd+1 > %zd\n",
+-			       strlen(label->append ?: ""),
+-			       strlen(ip_str), strlen(mac_str),
+-			       sizeof(bootargs));
+-			return 1;
+-		}
+-
+-		if (label->append)
+-			strncpy(bootargs, label->append, sizeof(bootargs));
+-
+-		strcat(bootargs, ip_str);
+-		strcat(bootargs, mac_str);
+-
+-		cli_simple_process_macros(bootargs, finalbootargs,
+-					  sizeof(finalbootargs));
+-		env_set("bootargs", finalbootargs);
+-		printf("append: %s\n", finalbootargs);
+-	}
+ 
+ 	bootm_argv[1] = env_get("kernel_addr_r");
+ 	/* for FIT, append the configuration identifier */
+@@ -775,9 +774,43 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 		bootm_argc = 4;
+ 	}
+ 
++	env_helper(cmdtp, label);
++
+ 	if (label->localcmd)
+ 		run_command_list(label->localcmd, strlen(label->localcmd), 0);
+ 
++	if ((label->ipappend & 0x3) || label->append) {
++		char bootargs[CONFIG_SYS_CBSIZE] = "";
++		char finalbootargs[CONFIG_SYS_CBSIZE];
++
++		if (strlen(label->append ?: "") +
++		    strlen(ip_str) + strlen(mac_str) + 1 > sizeof(bootargs)) {
++			printf("bootarg overflow %zd+%zd+%zd+1 > %zd\n",
++			       strlen(label->append ?: ""),
++			       strlen(ip_str), strlen(mac_str),
++			       sizeof(bootargs));
++			return 1;
++		}
++
++		if (label->append)
++			strncpy(bootargs, label->append, sizeof(bootargs));
++
++		strcat(bootargs, ip_str);
++		strcat(bootargs, mac_str);
++
++		int max_loop=32;
++		do {
++			cli_simple_process_macros(bootargs, finalbootargs,
++						  sizeof(finalbootargs));
++			cli_simple_process_macros(finalbootargs, bootargs,
++						  sizeof(bootargs));
++		} while (strcmp(bootargs, finalbootargs) && max_loop--);
++
++		env_set("bootargs", bootargs);
++		printf("append: %s\n", bootargs);
++	}
++
++
+ 	kernel_addr = genimg_get_kernel_addr(bootm_argv[1]);
+ 	buf = map_sysmem(kernel_addr, 0);
+ 	/* Try bootm for legacy and FIT format image */
+-- 
+2.25.1
+
