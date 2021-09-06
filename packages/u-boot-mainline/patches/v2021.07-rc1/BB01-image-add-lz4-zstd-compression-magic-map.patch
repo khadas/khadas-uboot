@@ -1,0 +1,29 @@
+From 05c3d7a6bedce370265f159a1d8cc51636185e9a Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 31 Aug 2021 18:10:02 +0800
+Subject: [PATCH] image: add lz4 zstd compression magic map
+
+Add lz4 and zstd compression magic map. Already can decompress images
+with lz4 and zstd compression type.
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ common/image.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/common/image.c b/common/image.c
+index 59c52a1f9a..e199d61a4c 100644
+--- a/common/image.c
++++ b/common/image.c
+@@ -216,6 +216,8 @@ static const struct comp_magic_map image_comp[] = {
+ 	{	IH_COMP_GZIP,	"gzip",		{0x1f, 0x8b},},
+ 	{	IH_COMP_LZMA,	"lzma",		{0x5d, 0x00},},
+ 	{	IH_COMP_LZO,	"lzo",		{0x89, 0x4c},},
++	{	IH_COMP_LZ4,    "lz4",          {0x04, 0x22},},
++	{	IH_COMP_ZSTD,   "zstd",         {0x28, 0xb5},},
+ 	{	IH_COMP_NONE,	"none",		{},	},
+ };
+ 
+-- 
+2.25.1
+
