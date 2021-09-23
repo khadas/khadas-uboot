@@ -32,7 +32,7 @@ PATCHING(){
 
 for P in $PKD/patches/$PKG_VERSION/*.patch; do
     [ -f "$P" ] && {
-	PN=$(basename $P)
+	PN=$(basename "$P")
 	echo "[i] PATCH $PN"
 	patch -p1 -d"$BS" < "$P" || FAIL
     }
@@ -40,7 +40,7 @@ done
 [ "$PATCH_DEBUG" ] && \
 for P in $PKD/patches/$PKG_VERSION/*.patch.debug*; do
     [ -f "$P" ] && {
-	PN=$(basename $P)
+	PN=$(basename "$P")
 	echo "[i] PATCH $PN"
 	patch -p1 -d"$BS" < "$P" || FAIL
     }
@@ -49,7 +49,7 @@ done
 [ "$PATCH_TEST" ] && \
 for P in $PKD/patches/$PKG_VERSION/*.patch.test*; do
     [ -f "$P" ] && {
-	PN=$(basename $P)
+	PN=$(basename "$P")
 	echo "[i] PATCH $PN"
 	patch -p1 -d"$BS" < "$P" || FAIL
     }
