@@ -1,0 +1,62 @@
+From cc9aae42622dab5ea701f470b9dc06265993ecd7 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 11 Oct 2021 15:14:46 +0800
+Subject: [PATCH] pxe_utils.c: env_helper: resolv to right path
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 26 ++++++++++++++++++++++++--
+ 1 file changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 2d181290..cd354dae 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -318,20 +318,42 @@ static void env_helper(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 	char *buf;
+ 	char *env_file = "uEnv.txt";
+ 	char *env_addr = env_get("scriptaddr");
++	char *bootfile = env_get("bootfile");
++	char *syslinux = env_get("boot_syslinux_conf");
++	char *pref;
++	char path[MAX_TFTP_PATH_LEN + 1];
+ 	unsigned long addr, file_size = 0;
+ 
+ 	if (!env_addr)
+ 		return;
+ 	if (strict_strtoul(env_addr, 16, &addr) < 0)
+ 		return;
+-	if (get_relfile(cmdtp, env_file, addr) < 0)
++
++	/*
++	 * resolv right path for both syslinux and pxe variants
++	 */
++	if (bootfile)
++		strcpy(path, bootfile);
++	if (syslinux && (pref = strstr(path,syslinux)))
++		*pref = '\0';
++	else
++		path[0] = '\0';
++
++	if (strlen(path) + strlen(env_file) > MAX_TFTP_PATH_LEN) {
++		printf("path (%s%s) too long, skipping\n", path, env_file);
++		return;
++	}
++
++	strcat(path, env_file);
++
++	if (get_relfile(cmdtp, path, addr) < 0)
+ 		return;
+ 	if (strict_strtoul(from_env("filesize"), 16, &file_size))
+ 		return;
+ 	if (file_size < 1)
+ 		return;
+ 
+-	printf("Import user vars: %s %ld bytes\n", env_file, file_size);
++	printf("Import user vars: %s %ld bytes\n", path, file_size);
+ 	buf = map_sysmem(addr , 0);
+ 	himport_r(&env_htab, buf, file_size, '\n', H_NOCLEAR, 0, 0, NULL);
+ }
+-- 
+2.25.1
+

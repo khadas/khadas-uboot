@@ -1,0 +1,50 @@
+From 0e8de63a08678352694b3ad0c3cfeedaa3528294 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 12 Oct 2021 11:04:21 +0800
+Subject: [PATCH] pxe_utils.c: localcmd #!
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 457b0185..7b10f939 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -873,6 +873,7 @@ enum token_type {
+ 	T_INITRD,
+ 	T_LOCALBOOT,
+ 	T_LOCALCMD,
++	T_LOCALCMD1,
+ 	T_LOCALCMD2,
+ 	T_DEFAULT,
+ 	T_PROMPT,
+@@ -909,6 +910,7 @@ static const struct token keywords[] = {
+ 	{"linux", T_LINUX},
+ 	{"localboot", T_LOCALBOOT},
+ 	{"localcmd", T_LOCALCMD},
++	{"#!", T_LOCALCMD1},
+ 	{"!", T_LOCALCMD2},
+ 	{"append", T_APPEND},
+ 	{"initrd", T_INITRD},
+@@ -1041,7 +1043,7 @@ static void get_token(char **p, struct token *t, enum lex_state state)
+ 	 * eat comments. note that string literals can't begin with #, but
+ 	 * can contain a # after their first character.
+ 	 */
+-	if (*c == '#') {
++	if (*c == '#' && *(c+1) != '!' ) {
+ 		while (*c && *c != '\n')
+ 			c++;
+ 	}
+@@ -1368,6 +1370,7 @@ static int parse_label(char **c, struct pxe_menu *cfg)
+ 			break;
+ 
+ 		case T_LOCALCMD:
++		case T_LOCALCMD1:
+ 		case T_LOCALCMD2:
+ 			if (label->localcmd) {
+ 				err = parse_sliteral(c, &add);
+-- 
+2.25.1
+

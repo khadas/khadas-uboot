@@ -1,0 +1,27 @@
+From 6b812161a66c7a744e5ae45eaf70a4dfdfb348df Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 12 Oct 2021 12:41:04 +0800
+Subject: [PATCH] config_distro_bootcmd.h: boot_extlinux restore bootfile env
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/config_distro_bootcmd.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/config_distro_bootcmd.h b/include/config_distro_bootcmd.h
+index dae7d930..58f1b536 100644
+--- a/include/config_distro_bootcmd.h
++++ b/include/config_distro_bootcmd.h
+@@ -477,7 +477,9 @@
+ 				"${devnum}:${distro_bootpart} "           \
+ 				"${prefix}${boot_syslinux_conf}; then "   \
+ 			"echo Found ${prefix}${boot_syslinux_conf}; "     \
++			"bootfile_bak=${bootfile}; "                      \
+ 			"run boot_extlinux; "                             \
++			"setenv bootfile ${bootfile_bak}; "               \
+ 			"echo SCRIPT FAILED: continuing...; "             \
+ 		"fi\0"                                                    \
+ 	\
+-- 
+2.25.1
+

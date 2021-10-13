@@ -1,0 +1,26 @@
+From c02c0d37cdcbbe399992336fa4af18f782564c99 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 12 Oct 2021 11:35:25 +0800
+Subject: [PATCH] config_distro_bootcmd.h: bootcmd_dhcp make devtype local
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/config_distro_bootcmd.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/config_distro_bootcmd.h b/include/config_distro_bootcmd.h
+index faa62bf6..dae7d930 100644
+--- a/include/config_distro_bootcmd.h
++++ b/include/config_distro_bootcmd.h
+@@ -405,7 +405,7 @@
+ #endif
+ #define BOOTENV_DEV_DHCP(devtypeu, devtypel, instance) \
+ 	"bootcmd_dhcp=" \
+-		"setenv devtype " #devtypel "; " \
++		"devtype=" #devtypel "; " \
+ 		BOOTENV_RUN_NET_USB_START \
+ 		BOOTENV_RUN_PCI_ENUM \
+ 		"if dhcp ${scriptaddr} ${boot_script_dhcp}; then " \
+-- 
+2.25.1
+
