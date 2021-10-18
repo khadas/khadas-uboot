@@ -37,6 +37,16 @@ for P in $PKD/patches/$PKG_VERSION/*.patch; do
 	patch -p1 -d"$BS" < "$P" || FAIL
     }
 done
+
+for P in $PKD/patches/$PKG_VERSION/*.patches/*.patch; do
+    [ -f "$P" ] && {
+#	PN=$(basename "$P")
+	PN=${P#*patches/$PKG_VERSION/}
+	echo "[i] PATCH + $PN"
+	patch -p1 -d"$BS" < "$P" || FAIL
+    }
+done
+
 [ "$PATCH_DEBUG" ] && \
 for P in $PKD/patches/$PKG_VERSION/*.patch.debug*; do
     [ -f "$P" ] && {
