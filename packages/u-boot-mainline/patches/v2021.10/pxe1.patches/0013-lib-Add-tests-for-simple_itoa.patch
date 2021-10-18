@@ -1,0 +1,75 @@
+From 92c87011f101d20bd8746664d4ad5dd9f72c9d4f Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:06 -0600
+Subject: [PATCH 13/18] lib: Add tests for simple_itoa()
+
+Add test and a comment for this function.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ include/vsprintf.h | 13 ++++++++++++-
+ test/print_ut.c    | 17 +++++++++++++++++
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/include/vsprintf.h b/include/vsprintf.h
+index 83d187e53d..4479df0af3 100644
+--- a/include/vsprintf.h
++++ b/include/vsprintf.h
+@@ -172,7 +172,18 @@ int sprintf(char *buf, const char *fmt, ...)
+  * See the vsprintf() documentation for format string extensions over C99.
+  */
+ int vsprintf(char *buf, const char *fmt, va_list args);
+-char *simple_itoa(ulong i);
++
++/**
++ * simple_itoa() - convert an unsigned integer to a string
++ *
++ * This returns a static string containing the decimal representation of the
++ * given value. The returned value may be overwritten by other calls to the
++ * same function, so should be used immediately
++ *
++ * @val: Value to convert
++ * @return string containing the decimal representation of @val
++ */
++char *simple_itoa(ulong val);
+ 
+ /**
+  * Format a string and place it in a buffer
+diff --git a/test/print_ut.c b/test/print_ut.c
+index 11d8580e55..4fbb15b6d3 100644
+--- a/test/print_ut.c
++++ b/test/print_ut.c
+@@ -10,6 +10,7 @@
+ #include <log.h>
+ #include <mapmem.h>
+ #include <version_string.h>
++#include <vsprintf.h>
+ #include <test/suites.h>
+ #include <test/test.h>
+ #include <test/ut.h>
+@@ -328,6 +329,22 @@ static int print_do_hex_dump(struct unit_test_state *uts)
+ }
+ PRINT_TEST(print_do_hex_dump, UT_TESTF_CONSOLE_REC);
+ 
++static int print_itoa(struct unit_test_state *uts)
++{
++	ut_asserteq_str("123", simple_itoa(123));
++	ut_asserteq_str("0", simple_itoa(0));
++	ut_asserteq_str("2147483647", simple_itoa(0x7fffffff));
++	ut_asserteq_str("4294967295", simple_itoa(0xffffffff));
++	if (sizeof(ulong) == 8) {
++		ut_asserteq_str("9223372036854775807",
++				simple_itoa((1UL << 63) - 1));
++		ut_asserteq_str("18446744073709551615", simple_itoa(-1));
++	}
++
++	return 0;
++}
++PRINT_TEST(print_itoa, 0);
++
+ int do_ut_print(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ {
+ 	struct unit_test *tests = UNIT_TEST_SUITE_START(print_test);
+-- 
+2.25.1
+

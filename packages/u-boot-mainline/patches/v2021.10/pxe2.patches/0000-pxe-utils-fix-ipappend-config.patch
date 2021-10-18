@@ -1,0 +1,41 @@
+From a71377680fb6df0c6fff9dfc356116d690a1f9f7 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 21 Jan 2021 12:36:24 +0800
+Subject: [PATCH] cmd: pxe_utils: fix ipappend ip config empty vars
+
+PROBLEM: If ipaddr, serverip, gatewayip or netmask variable undefined
+we can have for example ip=192.168.2.33:<NULL>:192.168.2.1:255.255.255.0
+yes its still works, but im think no need print <NULL>
+
+SUGGESTED SOLUTION:
+if some variable was undefined we need just print empty place like this
+ip=192.168.2.33::192.168.2.1:255.255.255.0
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+
+---
+ cmd/pxe_utils.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/cmd/boot/pxe_utils.c b/cmd/boot/pxe_utils.c
+index 8716e782..2049c0f3 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -395,9 +395,12 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 	}
+ 
+ 	if (label->ipappend & 0x1) {
++		char *a = env_get("ipaddr");
++		char *b = env_get("serverip");
++		char *c = env_get("gatewayip");
++		char *d = env_get("netmask");
+ 		sprintf(ip_str, " ip=%s:%s:%s:%s",
+-			env_get("ipaddr"), env_get("serverip"),
+-			env_get("gatewayip"), env_get("netmask"));
++			a ? a : "", b ? b : "", c ? c : "", d ? d : "");
+ 	}
+ 
+ #ifdef CONFIG_CMD_NET
+-- 
+2.25.1
+

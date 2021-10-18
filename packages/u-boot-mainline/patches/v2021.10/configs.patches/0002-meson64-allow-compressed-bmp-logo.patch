@@ -1,0 +1,26 @@
+From a820ccb94b3706f8945322e9720546eb92fd002f Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 15 Oct 2021 11:33:05 +0800
+Subject: [PATCH 2/2]  meson64: allow compressed bmp logo
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/meson64.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/configs/meson64.h b/include/configs/meson64.h
+index f9bb0240..f38fd6d6 100644
+--- a/include/configs/meson64.h
++++ b/include/configs/meson64.h
+@@ -23,6 +23,8 @@
+ #define STDOUT_CFG "serial"
+ #endif
+ 
++#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(2 << 20)
++
+ #ifdef CONFIG_USB_KEYBOARD
+ #define STDIN_CFG "usbkbd,serial"
+ #else
+-- 
+2.25.1
+

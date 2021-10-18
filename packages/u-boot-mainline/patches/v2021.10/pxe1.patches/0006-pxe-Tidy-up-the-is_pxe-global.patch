@@ -1,0 +1,165 @@
+From 8844568ec190e371f2dc65dce5c62b9e2049e9da Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:47:59 -0600
+Subject: [PATCH 06/18] pxe: Tidy up the is_pxe global
+
+Move this into the context to avoid a global variable. Also rename it
+since the current name does not explain what it actually affects.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ cmd/pxe.c       |  6 ++----
+ cmd/pxe_utils.c | 13 +++++++------
+ cmd/pxe_utils.h |  8 +++++---
+ cmd/sysboot.c   |  4 +---
+ 4 files changed, 15 insertions(+), 16 deletions(-)
+
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index d79b9b733d..17fe364bed 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -121,7 +121,7 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	struct pxe_context ctx;
+ 	int err, i = 0;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL);
++	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false);
+ 
+ 	if (argc != 1)
+ 		return CMD_RET_USAGE;
+@@ -175,7 +175,7 @@ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	char *pxefile_addr_str;
+ 	struct pxe_context ctx;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL);
++	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false);
+ 
+ 	if (argc == 1) {
+ 		pxefile_addr_str = from_env("pxefile_addr_r");
+@@ -235,8 +235,6 @@ static int do_pxe(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	if (argc < 2)
+ 		return CMD_RET_USAGE;
+ 
+-	is_pxe = true;
+-
+ 	/* drop initial "pxe" arg */
+ 	argc--;
+ 	argv++;
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 5ad6d3e3d4..7d15c75dd8 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -30,8 +30,6 @@
+ 
+ #define MAX_TFTP_PATH_LEN 512
+ 
+-bool is_pxe;
+-
+ int format_mac_pxe(char *outbuf, size_t outbuf_len)
+ {
+ 	uchar ethaddr[6];
+@@ -58,13 +56,13 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
+  * be interpreted as "don't prepend anything to paths".
+  */
+ static int get_bootfile_path(const char *file_path, char *bootfile_path,
+-			     size_t bootfile_path_size)
++			     size_t bootfile_path_size, bool allow_abs_path)
+ {
+ 	char *bootfile, *last_slash;
+ 	size_t path_len = 0;
+ 
+ 	/* Only syslinux allows absolute paths */
+-	if (file_path[0] == '/' && !is_pxe)
++	if (file_path[0] == '/' && allow_abs_path)
+ 		goto ret;
+ 
+ 	bootfile = from_env("bootfile");
+@@ -110,7 +108,8 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
+ 	char addr_buf[18];
+ 	int err;
+ 
+-	err = get_bootfile_path(file_path, relfile, sizeof(relfile));
++	err = get_bootfile_path(file_path, relfile, sizeof(relfile),
++				ctx->allow_abs_path);
+ 
+ 	if (err < 0)
+ 		return err;
+@@ -1432,9 +1431,11 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
+ }
+ 
+ void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+-		   pxe_getfile_func getfile, void *userdata)
++		   pxe_getfile_func getfile, void *userdata,
++		   bool allow_abs_path)
+ {
+ 	ctx->cmdtp = cmdtp;
+ 	ctx->getfile = getfile;
+ 	ctx->userdata = userdata;
++	ctx->allow_abs_path = allow_abs_path;
+ }
+diff --git a/cmd/pxe_utils.h b/cmd/pxe_utils.h
+index 921455f694..6681442ea5 100644
+--- a/cmd/pxe_utils.h
++++ b/cmd/pxe_utils.h
+@@ -75,8 +75,6 @@ struct pxe_menu {
+ 	struct list_head labels;
+ };
+ 
+-extern bool is_pxe;
+-
+ struct pxe_context;
+ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
+ 				char *file_addr);
+@@ -87,6 +85,7 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
+  * @cmdtp: Pointer to command table to use when calling other commands
+  * @getfile: Function called by PXE to read a file
+  * @userdata: Data the caller requires for @getfile
++ * @allow_abs_path: true to allow absolute paths
+  */
+ struct pxe_context {
+ 	struct cmd_tbl *cmdtp;
+@@ -102,6 +101,7 @@ struct pxe_context {
+ 	pxe_getfile_func getfile;
+ 
+ 	void *userdata;
++	bool allow_abs_path;
+ };
+ 
+ /**
+@@ -196,8 +196,10 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len);
+  * @cmdtp: Command table entry which started this action
+  * @getfile: Function to call to read a file
+  * @userdata: Data the caller requires for @getfile - stored in ctx->userdata
++ * @allow_abs_path: true to allow absolute paths
+  */
+ void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+-		   pxe_getfile_func getfile, void *userdata);
++		   pxe_getfile_func getfile, void *userdata,
++		   bool allow_abs_path);
+ 
+ #endif /* __PXE_UTILS_H */
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index 5615e81e9c..85fa5d8aa0 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -65,8 +65,6 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 	char *filename;
+ 	int prompt = 0;
+ 
+-	is_pxe = false;
+-
+ 	if (argc > 1 && strstr(argv[1], "-p")) {
+ 		prompt = 1;
+ 		argc--;
+@@ -91,7 +89,7 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		env_set("bootfile", filename);
+ 	}
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, NULL, NULL);
++	pxe_setup_ctx(&ctx, cmdtp, NULL, NULL, true);
+ 	if (strstr(argv[3], "ext2")) {
+ 		ctx.getfile = do_get_ext2;
+ 	} else if (strstr(argv[3], "fat")) {
+-- 
+2.25.1
+

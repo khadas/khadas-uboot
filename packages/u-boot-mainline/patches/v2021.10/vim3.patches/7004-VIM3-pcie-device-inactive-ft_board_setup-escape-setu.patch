@@ -1,0 +1,29 @@
+From cd42177095da9218c27c4d3259c9ebae3c9ab36a Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 10 Jun 2021 10:58:31 +0800
+Subject: [PATCH 2/2] VIM3: pcie device inactive ft_board_setup escape setup
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ board/amlogic/vim3/vim3.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/board/amlogic/vim3/vim3.c b/board/amlogic/vim3/vim3.c
+index aa31414f..c8ebd676 100644
+--- a/board/amlogic/vim3/vim3.c
++++ b/board/amlogic/vim3/vim3.c
+@@ -45,6 +45,11 @@ int meson_ft_board_setup(void *blob, struct bd_info *bd)
+ 	unsigned int i2c_addr;
+ 	u32 *val;
+ 
++	if (env_get("pcie_inactive") != NULL) {
++		printf("vim3: PCIe inactive\n");
++		return 0;
++	}
++
+ 	/* Find I2C device */
+ 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "khadas,mcu");
+ 	if (node < 0) {
+-- 
+2.25.1
+

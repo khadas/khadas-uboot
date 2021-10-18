@@ -1,0 +1,80 @@
+From 3ea6aaee88e86f0e491e84749a302b02721a95ff Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:00 -0600
+Subject: [PATCH 07/18] pxe: Move pxe_utils files
+
+Move the header file into the main include/ directory so we can use it
+from the bootmethod code. Move the C file into boot/ since it relates to
+booting.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ boot/Makefile                | 3 +++
+ {cmd => boot}/pxe_utils.c    | 0
+ cmd/Makefile                 | 4 ++--
+ cmd/sysboot.c                | 2 +-
+ {cmd => include}/pxe_utils.h | 0
+ 5 files changed, 6 insertions(+), 3 deletions(-)
+ rename {cmd => boot}/pxe_utils.c (100%)
+ rename {cmd => include}/pxe_utils.h (100%)
+
+diff --git a/boot/Makefile b/boot/Makefile
+index a19e85cf6c..2938c3f145 100644
+--- a/boot/Makefile
++++ b/boot/Makefile
+@@ -14,6 +14,9 @@ obj-$(CONFIG_CMD_BOOTM) += bootm.o bootm_os.o
+ obj-$(CONFIG_CMD_BOOTZ) += bootm.o bootm_os.o
+ obj-$(CONFIG_CMD_BOOTI) += bootm.o bootm_os.o
+ 
++obj-$(CONFIG_CMD_PXE) += pxe_utils.o
++obj-$(CONFIG_CMD_SYSBOOT) += pxe_utils.o
++
+ endif
+ 
+ obj-y += image.o image-board.o
+diff --git a/cmd/pxe_utils.c b/boot/pxe_utils.c
+similarity index 100%
+rename from cmd/pxe_utils.c
+rename to boot/pxe_utils.c
+diff --git a/cmd/Makefile b/cmd/Makefile
+index ed3669411e..891819ae0f 100644
+--- a/cmd/Makefile
++++ b/cmd/Makefile
+@@ -123,7 +123,7 @@ obj-$(CONFIG_CMD_PINMUX) += pinmux.o
+ obj-$(CONFIG_CMD_PMC) += pmc.o
+ obj-$(CONFIG_CMD_PSTORE) += pstore.o
+ obj-$(CONFIG_CMD_PWM) += pwm.o
+-obj-$(CONFIG_CMD_PXE) += pxe.o pxe_utils.o
++obj-$(CONFIG_CMD_PXE) += pxe.o
+ obj-$(CONFIG_CMD_WOL) += wol.o
+ obj-$(CONFIG_CMD_QFW) += qfw.o
+ obj-$(CONFIG_CMD_READ) += read.o
+@@ -145,7 +145,7 @@ obj-$(CONFIG_CMD_SETEXPR_FMT) += printf.o
+ obj-$(CONFIG_CMD_SPI) += spi.o
+ obj-$(CONFIG_CMD_STRINGS) += strings.o
+ obj-$(CONFIG_CMD_SMC) += smccc.o
+-obj-$(CONFIG_CMD_SYSBOOT) += sysboot.o pxe_utils.o
++obj-$(CONFIG_CMD_SYSBOOT) += sysboot.o
+ obj-$(CONFIG_CMD_STACKPROTECTOR_TEST) += stackprot_test.o
+ obj-$(CONFIG_CMD_TERMINAL) += terminal.o
+ obj-$(CONFIG_CMD_TIME) += time.o
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index 85fa5d8aa0..b81255e155 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -4,7 +4,7 @@
+ #include <command.h>
+ #include <env.h>
+ #include <fs.h>
+-#include "pxe_utils.h"
++#include <pxe_utils.h>
+ 
+ static char *fs_argv[5];
+ 
+diff --git a/cmd/pxe_utils.h b/include/pxe_utils.h
+similarity index 100%
+rename from cmd/pxe_utils.h
+rename to include/pxe_utils.h
+-- 
+2.25.1
+

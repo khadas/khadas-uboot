@@ -1,0 +1,139 @@
+From d7de3277a4c0aa163fd7b953bd2418c0037a8382 Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:03 -0600
+Subject: [PATCH 10/18] pxe: Move common parsing coding into pxe_util
+
+Both the syslinux and pxe commands use essentially the same code to parse
+and run extlinux.conf files. Move this into a common function.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ boot/pxe_utils.c    | 20 ++++++++++++++++++++
+ cmd/pxe.c           | 15 ++++-----------
+ cmd/sysboot.c       | 18 ++++--------------
+ include/pxe_utils.h |  9 +++++++++
+ 4 files changed, 37 insertions(+), 25 deletions(-)
+
+diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
+index 9f3edeab06..225729ce57 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -1486,3 +1486,23 @@ void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+ 	ctx->userdata = userdata;
+ 	ctx->allow_abs_path = allow_abs_path;
+ }
++
++int pxe_process(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt)
++{
++	struct pxe_menu *cfg;
++
++	cfg = parse_pxefile(ctx, pxefile_addr_r);
++	if (!cfg) {
++		printf("Error parsing config file\n");
++		return 1;
++	}
++
++	if (prompt)
++		cfg->prompt = 1;
++
++	handle_pxe_menu(ctx, cfg);
++
++	destroy_pxe_menu(cfg);
++
++	return 0;
++}
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index 17fe364bed..4fa51d2e05 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -171,9 +171,9 @@ static int
+ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ {
+ 	unsigned long pxefile_addr_r;
+-	struct pxe_menu *cfg;
+ 	char *pxefile_addr_str;
+ 	struct pxe_context ctx;
++	int ret;
+ 
+ 	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false);
+ 
+@@ -193,16 +193,9 @@ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 		return 1;
+ 	}
+ 
+-	cfg = parse_pxefile(&ctx, pxefile_addr_r);
+-
+-	if (!cfg) {
+-		printf("Error parsing config file\n");
+-		return 1;
+-	}
+-
+-	handle_pxe_menu(&ctx, cfg);
+-
+-	destroy_pxe_menu(cfg);
++	ret = pxe_process(&ctx, pxefile_addr_r, false);
++	if (ret)
++		return CMD_RET_FAILURE;
+ 
+ 	copy_filename(net_boot_file_name, "", sizeof(net_boot_file_name));
+ 
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index b81255e155..7ee14df79e 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -60,10 +60,10 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ {
+ 	unsigned long pxefile_addr_r;
+ 	struct pxe_context ctx;
+-	struct pxe_menu *cfg;
+ 	char *pxefile_addr_str;
+ 	char *filename;
+ 	int prompt = 0;
++	int ret;
+ 
+ 	if (argc > 1 && strstr(argv[1], "-p")) {
+ 		prompt = 1;
+@@ -113,19 +113,9 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		return 1;
+ 	}
+ 
+-	cfg = parse_pxefile(&ctx, pxefile_addr_r);
+-
+-	if (!cfg) {
+-		printf("Error parsing config file\n");
+-		return 1;
+-	}
+-
+-	if (prompt)
+-		cfg->prompt = 1;
+-
+-	handle_pxe_menu(&ctx, cfg);
+-
+-	destroy_pxe_menu(cfg);
++	ret = pxe_process(&ctx, pxefile_addr_r, prompt);
++	if (ret)
++		return CMD_RET_FAILURE;
+ 
+ 	return 0;
+ }
+diff --git a/include/pxe_utils.h b/include/pxe_utils.h
+index 6681442ea5..0cae0dabec 100644
+--- a/include/pxe_utils.h
++++ b/include/pxe_utils.h
+@@ -202,4 +202,13 @@ void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+ 		   pxe_getfile_func getfile, void *userdata,
+ 		   bool allow_abs_path);
+ 
++/**
++ * pxe_process() - Process a PXE file through to boot
++ *
++ * @ctx: PXE context created with pxe_setup_ctx()
++ * @pxefile_addr_r: Address to load file
++ * @prompt: Force a prompt for the user
++ */
++int pxe_process(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt);
++
+ #endif /* __PXE_UTILS_H */
+-- 
+2.25.1
+

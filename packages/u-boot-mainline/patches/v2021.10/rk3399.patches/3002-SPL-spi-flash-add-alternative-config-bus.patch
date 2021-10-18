@@ -1,0 +1,33 @@
+From cc3b0b321bf7a2d530dcc880b3f4ec8b111d3bb1 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 20 May 2021 18:00:17 +0800
+Subject: [PATCH] SPL spi flash add alternative config bus
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ common/spl/spl_spi.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/common/spl/spl_spi.c b/common/spl/spl_spi.c
+index 6a4e0332..37c5fb3a 100644
+--- a/common/spl/spl_spi.c
++++ b/common/spl/spl_spi.c
+@@ -90,7 +90,14 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
+ 	 * taken from DT when available
+ 	 */
+ 
+-	flash = spi_flash_probe(CONFIG_SF_DEFAULT_BUS,
++#define CONFIG_SPL_SF_DEFAULT_BUS 0
++#ifdef CONFIG_SPL_SF_DEFAULT_BUS
++	int spi_bus = CONFIG_SPL_SF_DEFAULT_BUS;
++#else
++	int spi_bus = CONFIG_SF_DEFAULT_BUS;
++#endif
++
++	flash = spi_flash_probe(spi_bus,
+ 				CONFIG_SF_DEFAULT_CS,
+ 				CONFIG_SF_DEFAULT_SPEED,
+ 				CONFIG_SF_DEFAULT_MODE);
+-- 
+2.25.1
+

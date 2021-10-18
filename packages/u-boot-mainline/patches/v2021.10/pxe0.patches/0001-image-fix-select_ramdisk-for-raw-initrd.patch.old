@@ -1,0 +1,33 @@
+From f6e4767ae21d379388569f72503d0f021b734f6c Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 15 Oct 2021 18:02:46 +0800
+Subject: [PATCH] image: fix select_ramdisk for raw initrd
+
+Problem
+
+We have unbootable raw initrd images because, select_ramdisk for raw
+initrd images ignore submited select addr and setup rd_datap value to 0
+
+Solution: setup rd_datap value from select
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ common/image-board.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/image-board.c b/common/image-board.c
+index e7660352e9..e3c6ea806a 100644
+--- a/common/image-board.c
++++ b/common/image-board.c
+@@ -439,7 +439,7 @@ static int select_ramdisk(bootm_headers_t *images, const char *select, u8 arch,
+ 				end = strchr(select, ':');
+ 			if (end) {
+ 				*rd_lenp = hextoul(++end, NULL);
+-				*rd_datap = rd_addr;
++				*rd_datap = hextoul(select, NULL);
+ 				processed = true;
+ 			}
+ 		}
+-- 
+2.25.1
+

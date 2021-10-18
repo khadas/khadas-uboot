@@ -1,0 +1,27 @@
+From 5e8bf1e0ab538aeed6c7b6ab4ed6a207167e52ca Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 20 Jul 2021 11:25:01 +0800
+Subject: [PATCH] usb: ohci: ohci_usb_remove deactivate
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/usb/host/ohci-generic.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/usb/host/ohci-generic.c b/drivers/usb/host/ohci-generic.c
+index 163f0ef1..7e1f6f92 100644
+--- a/drivers/usb/host/ohci-generic.c
++++ b/drivers/usb/host/ohci-generic.c
+@@ -196,7 +196,8 @@ U_BOOT_DRIVER(ohci_generic) = {
+ 	.id	= UCLASS_USB,
+ 	.of_match = ohci_usb_ids,
+ 	.probe = ohci_usb_probe,
+-	.remove = ohci_usb_remove,
++//	kernel stack there
++//	.remove = ohci_usb_remove,
+ 	.ops	= &ohci_usb_ops,
+ 	.priv_auto	= sizeof(struct generic_ohci),
+ 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+-- 
+2.25.1
+

@@ -1,0 +1,44 @@
+From cf2abadf4bfb3e593908ae958eedd88c531e6c08 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 20 May 2021 16:59:25 +0800
+Subject: [PATCH] rk3399-khadas-edge usb tmp fix
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ arch/arm/dts/rk3399-khadas-edge.dtsi | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/dts/rk3399-khadas-edge.dtsi b/arch/arm/dts/rk3399-khadas-edge.dtsi
+index e87a0447..31517c32 100644
+--- a/arch/arm/dts/rk3399-khadas-edge.dtsi
++++ b/arch/arm/dts/rk3399-khadas-edge.dtsi
+@@ -772,14 +772,17 @@
+ 	status = "okay";
+ };
+ 
++/*
+ &usbdrd3_0 {
+ 	status = "okay";
+ };
+ 
+ &usbdrd_dwc3_0 {
+ 	status = "okay";
+-	dr_mode = "otg";
++	maximum-speed = "high-speed";
++	dr_mode = "host";
+ };
++*/
+ 
+ &usbdrd3_1 {
+ 	status = "okay";
+@@ -787,6 +790,7 @@
+ 
+ &usbdrd_dwc3_1 {
+ 	status = "okay";
++	maximum-speed = "high-speed";
+ 	dr_mode = "host";
+ };
+ 
+-- 
+2.25.1
+

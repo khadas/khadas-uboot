@@ -1,0 +1,56 @@
+From 24f710e01bb0122af46097a04a13570cb98da0a9 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 15 Oct 2021 14:28:40 +0800
+Subject: [PATCH] pxe_utils.c: env helper
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ boot/pxe_utils.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
+index 5de48f22..9ba20718 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -633,6 +633,8 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
+ 		}
+ 	}
+ 
++	env_helper(cmdtp, label);
++
+ 	if (!bootm_argv[3])
+ 		bootm_argv[3] = env_get("fdt_addr");
+ 
+@@ -889,6 +891,29 @@ static void eol_or_eof(char **c)
+ 		(*c)++;
+ }
+ 
++static void env_helper(struct cmd_tbl *cmdtp, struct pxe_label *label)
++{
++	char *buf;
++	char *env_file = "uEnv.txt";
++	char *env_addr = env_get("scriptaddr");
++	unsigned long addr, file_size = 0;
++
++	if (!env_addr)
++		return;
++	if (strict_strtoul(env_addr, 16, &addr) < 0)
++		return;
++	if (get_relfile(cmdtp, env_file, addr) < 0)
++		return;
++	if (strict_strtoul(from_env("filesize"), 16, &file_size))
++		return;
++	if (file_size < 1)
++		return;
++
++	printf("Import user vars: %s %ld bytes\n", env_file, file_size);
++	buf = map_sysmem(addr , 0);
++	himport_r(&env_htab, buf, file_size, '\n', H_NOCLEAR, 0, 0, NULL);
++}
++
+ /*
+  * All of these parse_* functions share some common behavior.
+  *
+-- 
+2.25.1
+

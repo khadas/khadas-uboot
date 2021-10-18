@@ -1,0 +1,35 @@
+From 6312c50b95131d2d488559b9e25c8993e04de6ec Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 26 Apr 2021 16:19:19 +0800
+Subject: [PATCH] env: CONFIG_ENV_BAD_CRC_IS_OK
+
+Problem: default lookup env driver return 1st source with good CRC,
+but for some cases bad CRC same is enough (for example next saveenv
+usage for this source)
+
+Stop scan other environment driver via CONFIG_ENV_BAD_CRC_IS_OK,
+and use current with bad CRC (default environment)
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ env/env.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/env/env.c b/env/env.c
+index 37b4b54c..d1afdec3 100644
+--- a/env/env.c
++++ b/env/env.c
+@@ -208,6 +208,10 @@ int env_load(void)
+ 			/* Handle "bad CRC" case */
+ 			if (best_prio == -1)
+ 				best_prio = prio;
++			if (IS_ENABLED(CONFIG_ENV_BAD_CRC_IS_OK)) {
++				gd->env_load_prio = prio;
++				return 0;
++			}
+ 		} else {
+ 			debug("Failed (%d)\n", ret);
+ 		}
+-- 
+2.25.1
+

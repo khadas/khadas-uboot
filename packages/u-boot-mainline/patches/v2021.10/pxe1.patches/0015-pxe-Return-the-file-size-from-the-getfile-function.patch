@@ -1,0 +1,341 @@
+From 708b3d6edbf376bb47b0798b437986c6f144cce8 Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:08 -0600
+Subject: [PATCH 15/18] pxe: Return the file size from the getfile() function
+
+It is pretty strange that the pxe code uses the 'filesize' environment
+variable find the size of a file it has just read.
+
+Partly this is because it uses the command-line interpreter to parse its
+request to load the file.
+
+As a first step towards unwinding this, return it directly from the
+getfile() function. This makes the code a bit longer, for now, but will be
+cleaned up in future patches.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ boot/pxe_utils.c    | 70 ++++++++++++++++++++++++++++-----------------
+ cmd/pxe.c           |  7 ++++-
+ cmd/sysboot.c       | 21 ++++++++++++--
+ include/pxe_utils.h | 13 ++++++++-
+ 4 files changed, 79 insertions(+), 32 deletions(-)
+
+diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
+index f36f1f8a60..e377e16be5 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -30,6 +30,20 @@
+ 
+ #define MAX_TFTP_PATH_LEN 512
+ 
++int pxe_get_file_size(ulong *sizep)
++{
++	const char *val;
++
++	val = from_env("filesize");
++	if (!val)
++		return -ENOENT;
++
++	if (strict_strtoul(val, 16, sizep) < 0)
++		return -EINVAL;
++
++	return 0;
++}
++
+ /**
+  * format_mac_pxe() - obtain a MAC address in the PXE format
+  *
+@@ -75,14 +89,17 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
+  * @ctx: PXE context
+  * @file_path: File path to read (relative to the PXE file)
+  * @file_addr: Address to load file to
++ * @filesizep: If not NULL, returns the file size in bytes
+  * Returns 1 for success, or < 0 on error
+  */
+ static int get_relfile(struct pxe_context *ctx, const char *file_path,
+-		       unsigned long file_addr)
++		       unsigned long file_addr, ulong *filesizep)
+ {
+ 	size_t path_len;
+ 	char relfile[MAX_TFTP_PATH_LEN + 1];
+ 	char addr_buf[18];
++	ulong size;
++	int ret;
+ 
+ 	if (file_path[0] == '/' && ctx->allow_abs_path)
+ 		*relfile = '\0';
+@@ -103,7 +120,13 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
+ 
+ 	sprintf(addr_buf, "%lx", file_addr);
+ 
+-	return ctx->getfile(ctx, relfile, addr_buf);
++	ret = ctx->getfile(ctx, relfile, addr_buf, &size);
++	if (ret < 0)
++		return log_msg_ret("get", ret);
++	if (filesizep)
++		*filesizep = size;
++
++	return 1;
+ }
+ 
+ /**
+@@ -117,29 +140,17 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
+  * Returns 1 for success, or < 0 on error
+  */
+ int get_pxe_file(struct pxe_context *ctx, const char *file_path,
+-		 unsigned long file_addr)
++		 ulong file_addr)
+ {
+-	unsigned long config_file_size;
+-	char *tftp_filesize;
++	ulong size;
+ 	int err;
+ 	char *buf;
+ 
+-	err = get_relfile(ctx, file_path, file_addr);
++	err = get_relfile(ctx, file_path, file_addr, &size);
+ 	if (err < 0)
+ 		return err;
+ 
+-	/*
+-	 * the file comes without a NUL byte at the end, so find out its size
+-	 * and add the NUL byte.
+-	 */
+-	tftp_filesize = from_env("filesize");
+-	if (!tftp_filesize)
+-		return -ENOENT;
+-
+-	if (strict_strtoul(tftp_filesize, 16, &config_file_size) < 0)
+-		return -EINVAL;
+-
+-	buf = map_sysmem(file_addr + config_file_size, 1);
++	buf = map_sysmem(file_addr + size, 1);
+ 	*buf = '\0';
+ 	unmap_sysmem(buf);
+ 
+@@ -184,12 +195,13 @@ int get_pxelinux_path(struct pxe_context *ctx, const char *file,
+  * @file_path: File path to read (relative to the PXE file)
+  * @envaddr_name: Name of environment variable which contains the address to
+  *	load to
++ * @filesizep: Returns the file size in bytes
+  * Returns 1 on success, -ENOENT if @envaddr_name does not exist as an
+  *	environment variable, -EINVAL if its format is not valid hex, or other
+  *	value < 0 on other error
+  */
+ static int get_relfile_envaddr(struct pxe_context *ctx, const char *file_path,
+-			       const char *envaddr_name)
++			       const char *envaddr_name, ulong *filesizep)
+ {
+ 	unsigned long file_addr;
+ 	char *envaddr;
+@@ -201,7 +213,7 @@ static int get_relfile_envaddr(struct pxe_context *ctx, const char *file_path,
+ 	if (strict_strtoul(envaddr, 16, &file_addr) < 0)
+ 		return -EINVAL;
+ 
+-	return get_relfile(ctx, file_path, file_addr);
++	return get_relfile(ctx, file_path, file_addr, filesizep);
+ }
+ 
+ /**
+@@ -357,8 +369,8 @@ static void label_boot_fdtoverlay(struct pxe_context *ctx,
+ 			goto skip_overlay;
+ 
+ 		/* Load overlay file */
+-		err = get_relfile_envaddr(ctx, overlayfile,
+-					  "fdtoverlay_addr_r");
++		err = get_relfile_envaddr(ctx, overlayfile, "fdtoverlay_addr_r",
++					  NULL);
+ 		if (err < 0) {
+ 			printf("Failed loading overlay %s\n", overlayfile);
+ 			goto skip_overlay;
+@@ -438,7 +450,10 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
+ 	}
+ 
+ 	if (label->initrd) {
+-		if (get_relfile_envaddr(ctx, label->initrd, "ramdisk_addr_r") < 0) {
++		ulong size;
++
++		if (get_relfile_envaddr(ctx, label->initrd, "ramdisk_addr_r",
++					&size) < 0) {
+ 			printf("Skipping %s for failure retrieving initrd\n",
+ 			       label->name);
+ 			return 1;
+@@ -447,11 +462,12 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
+ 		bootm_argv[2] = initrd_str;
+ 		strncpy(bootm_argv[2], env_get("ramdisk_addr_r"), 18);
+ 		strcat(bootm_argv[2], ":");
+-		strncat(bootm_argv[2], env_get("filesize"), 9);
++		strcat(bootm_argv[2], simple_xtoa(size));
+ 		bootm_argc = 3;
+ 	}
+ 
+-	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r") < 0) {
++	if (get_relfile_envaddr(ctx, label->kernel, "kernel_addr_r",
++				NULL) < 0) {
+ 		printf("Skipping %s for failure retrieving kernel\n",
+ 		       label->name);
+ 		return 1;
+@@ -592,7 +608,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
+ 
+ 		if (fdtfile) {
+ 			int err = get_relfile_envaddr(ctx, fdtfile,
+-						      "fdt_addr_r");
++						      "fdt_addr_r", NULL);
+ 
+ 			free(fdtfilefree);
+ 			if (err < 0) {
+@@ -1384,7 +1400,7 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
+ 	if (IS_ENABLED(CONFIG_CMD_BMP)) {
+ 		/* display BMP if available */
+ 		if (cfg->bmp) {
+-			if (get_relfile(ctx, cfg->bmp, image_load_addr)) {
++			if (get_relfile(ctx, cfg->bmp, image_load_addr, NULL)) {
+ 				if (CONFIG_IS_ENABLED(CMD_CLS))
+ 					run_command("cls", 0);
+ 				bmp_display(image_load_addr,
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index e319db51ef..81703386c4 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -25,15 +25,20 @@ const char *pxe_default_paths[] = {
+ };
+ 
+ static int do_get_tftp(struct pxe_context *ctx, const char *file_path,
+-		       char *file_addr)
++		       char *file_addr, ulong *sizep)
+ {
+ 	char *tftp_argv[] = {"tftp", NULL, NULL, NULL};
++	int ret;
+ 
+ 	tftp_argv[1] = file_addr;
+ 	tftp_argv[2] = (void *)file_path;
+ 
+ 	if (do_tftpb(ctx->cmdtp, 0, 3, tftp_argv))
+ 		return -ENOENT;
++	ret = pxe_get_file_size(sizep);
++	if (ret)
++		return log_msg_ret("tftp", ret);
++	ctx->pxe_file_size = *sizep;
+ 
+ 	return 1;
+ }
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index c45fed774d..6344ecd357 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -9,43 +9,58 @@
+ static char *fs_argv[5];
+ 
+ static int do_get_ext2(struct pxe_context *ctx, const char *file_path,
+-		       char *file_addr)
++		       char *file_addr, ulong *sizep)
+ {
+ #ifdef CONFIG_CMD_EXT2
++	int ret;
++
+ 	fs_argv[0] = "ext2load";
+ 	fs_argv[3] = file_addr;
+ 	fs_argv[4] = (void *)file_path;
+ 
+ 	if (!do_ext2load(ctx->cmdtp, 0, 5, fs_argv))
+ 		return 1;
++	ret = pxe_get_file_size(sizep);
++	if (ret)
++		return log_msg_ret("tftp", ret);
+ #endif
+ 	return -ENOENT;
+ }
+ 
+ static int do_get_fat(struct pxe_context *ctx, const char *file_path,
+-		      char *file_addr)
++		      char *file_addr, ulong *sizep)
+ {
+ #ifdef CONFIG_CMD_FAT
++	int ret;
++
+ 	fs_argv[0] = "fatload";
+ 	fs_argv[3] = file_addr;
+ 	fs_argv[4] = (void *)file_path;
+ 
+ 	if (!do_fat_fsload(ctx->cmdtp, 0, 5, fs_argv))
+ 		return 1;
++	ret = pxe_get_file_size(sizep);
++	if (ret)
++		return log_msg_ret("tftp", ret);
+ #endif
+ 	return -ENOENT;
+ }
+ 
+ static int do_get_any(struct pxe_context *ctx, const char *file_path,
+-		      char *file_addr)
++		      char *file_addr, ulong *sizep)
+ {
+ #ifdef CONFIG_CMD_FS_GENERIC
++	int ret;
++
+ 	fs_argv[0] = "load";
+ 	fs_argv[3] = file_addr;
+ 	fs_argv[4] = (void *)file_path;
+ 
+ 	if (!do_load(ctx->cmdtp, 0, 5, fs_argv, FS_TYPE_ANY))
+ 		return 1;
++	ret = pxe_get_file_size(sizep);
++	if (ret)
++		return log_msg_ret("tftp", ret);
+ #endif
+ 	return -ENOENT;
+ }
+diff --git a/include/pxe_utils.h b/include/pxe_utils.h
+index 8b50f2e686..194a5ed8cc 100644
+--- a/include/pxe_utils.h
++++ b/include/pxe_utils.h
+@@ -77,7 +77,7 @@ struct pxe_menu {
+ 
+ struct pxe_context;
+ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
+-				char *file_addr);
++				char *file_addr, ulong *filesizep);
+ 
+ /**
+  * struct pxe_context - context information for PXE parsing
+@@ -88,6 +88,7 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
+  * @allow_abs_path: true to allow absolute paths
+  * @bootdir: Directory that files are loaded from ("" if no directory). This is
+  *	allocated
++ * @pxe_file_size: Size of the PXE file
+  */
+ struct pxe_context {
+ 	struct cmd_tbl *cmdtp;
+@@ -98,6 +99,7 @@ struct pxe_context {
+ 	 * @file_path: Path to the file
+ 	 * @file_addr: String containing the hex address to put the file in
+ 	 *	memory
++	 * @filesizep: Returns the file size in bytes
+ 	 * Return 0 if OK, -ve on error
+ 	 */
+ 	pxe_getfile_func getfile;
+@@ -105,6 +107,7 @@ struct pxe_context {
+ 	void *userdata;
+ 	bool allow_abs_path;
+ 	char *bootdir;
++	ulong pxe_file_size;
+ };
+ 
+ /**
+@@ -225,4 +228,12 @@ void pxe_destroy_ctx(struct pxe_context *ctx);
+  */
+ int pxe_process(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt);
+ 
++/**
++ * pxe_get_file_size() - Read the value of the 'filesize' environment variable
++ *
++ * @sizep: Place to put the value
++ * @return 0 if OK, -ENOENT if no such variable, -EINVAL if format is invalid
++ */
++int pxe_get_file_size(ulong *sizep);
++
+ #endif /* __PXE_UTILS_H */
+-- 
+2.25.1
+

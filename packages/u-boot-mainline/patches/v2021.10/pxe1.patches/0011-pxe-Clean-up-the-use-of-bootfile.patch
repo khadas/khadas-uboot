@@ -1,0 +1,304 @@
+From 976af2603e7818f9593da324495d8d29b6332bcc Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:04 -0600
+Subject: [PATCH 11/18] pxe: Clean up the use of bootfile
+
+The 'bootfile' environment variable is read in the bowels of pxe_util to
+provide a directory to which all loaded files are relative.
+
+This is not obvious from the API to PXE and it is strange to make the
+caller set an environment variable rather than pass this as a parameter.
+
+The code is also convoluted, which this feature implemented by
+get_bootfile_path().
+
+Update the API to improve this. Unfortunately this means that
+pxe_setup_ctx() can fail, so add error checking.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ boot/pxe_utils.c    | 60 ++++++++++++++++++++++++++++-----------------
+ cmd/pxe.c           | 18 +++++++++++---
+ cmd/sysboot.c       | 15 +++++++++---
+ include/pxe_utils.h | 19 +++++++++++---
+ 4 files changed, 79 insertions(+), 33 deletions(-)
+
+diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
+index 225729ce57..c04be110ea 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -67,10 +67,10 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
+ /**
+  * get_bootfile_path() - Figure out the path of a file to read
+  *
+- * Returns the directory the file specified in the 'bootfile' env variable is
+- * in. If bootfile isn't defined in the environment, return NULL, which should
+- * be interpreted as "don't prepend anything to paths".
++ * Copies the boot directory into the supplied buffer. If there is no boot
++ * directory, set it to ""
+  *
++ * @ctx: PXE context
+  * @file_path: File path to read (relative to the PXE file)
+  * @bootfile_path: Place to put the bootfile path
+  * @bootfile_path_size: Size of @bootfile_path in bytes
+@@ -79,34 +79,25 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len)
+  * Returns 1 for success, -ENOSPC if bootfile_path_size is to small to hold the
+  *	resulting path
+  */
+-static int get_bootfile_path(const char *file_path, char *bootfile_path,
+-			     size_t bootfile_path_size, bool allow_abs_path)
++static int get_bootfile_path(struct pxe_context *ctx, const char *file_path,
++			     char *bootfile_path, size_t bootfile_path_size,
++			     bool allow_abs_path)
+ {
+-	char *bootfile, *last_slash;
+ 	size_t path_len = 0;
+ 
+ 	/* Only syslinux allows absolute paths */
+ 	if (file_path[0] == '/' && allow_abs_path)
+ 		goto ret;
+ 
+-	bootfile = from_env("bootfile");
+-	if (!bootfile)
+-		goto ret;
+-
+-	last_slash = strrchr(bootfile, '/');
+-	if (!last_slash)
+-		goto ret;
+-
+-	path_len = (last_slash - bootfile) + 1;
+-
+-	if (bootfile_path_size < path_len) {
++	path_len = strlen(ctx->bootdir);
++	if (bootfile_path_size < path_len + 1) {
+ 		printf("bootfile_path too small. (%zd < %zd)\n",
+ 		       bootfile_path_size, path_len);
+ 
+ 		return -ENOSPC;
+ 	}
+ 
+-	strncpy(bootfile_path, bootfile, path_len);
++	strncpy(bootfile_path, ctx->bootdir, path_len);
+ 
+  ret:
+ 	bootfile_path[path_len] = '\0';
+@@ -135,7 +126,7 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
+ 	char addr_buf[18];
+ 	int err;
+ 
+-	err = get_bootfile_path(file_path, relfile, sizeof(relfile),
++	err = get_bootfile_path(ctx, file_path, relfile, sizeof(relfile),
+ 				ctx->allow_abs_path);
+ 	if (err < 0)
+ 		return err;
+@@ -1477,14 +1468,39 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
+ 	boot_unattempted_labels(ctx, cfg);
+ }
+ 
+-void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+-		   pxe_getfile_func getfile, void *userdata,
+-		   bool allow_abs_path)
++int pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
++		  pxe_getfile_func getfile, void *userdata,
++		  bool allow_abs_path, const char *bootfile)
+ {
++	const char *last_slash;
++	size_t path_len = 0;
++
++	memset(ctx, '\0', sizeof(*ctx));
+ 	ctx->cmdtp = cmdtp;
+ 	ctx->getfile = getfile;
+ 	ctx->userdata = userdata;
+ 	ctx->allow_abs_path = allow_abs_path;
++
++	/* figure out the boot directory, if there is one */
++	if (bootfile && strlen(bootfile) >= MAX_TFTP_PATH_LEN)
++		return -ENOSPC;
++	ctx->bootdir = strdup(bootfile ? bootfile : "");
++	if (!ctx->bootdir)
++		return -ENOMEM;
++
++	if (bootfile) {
++		last_slash = strrchr(bootfile, '/');
++		if (last_slash)
++			path_len = (last_slash - bootfile) + 1;
++	}
++	ctx->bootdir[path_len] = '\0';
++
++	return 0;
++}
++
++void pxe_destroy_ctx(struct pxe_context *ctx)
++{
++	free(ctx->bootdir);
+ }
+ 
+ int pxe_process(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt)
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index 4fa51d2e05..e319db51ef 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -121,8 +121,6 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	struct pxe_context ctx;
+ 	int err, i = 0;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false);
+-
+ 	if (argc != 1)
+ 		return CMD_RET_USAGE;
+ 
+@@ -136,6 +134,11 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	if (err < 0)
+ 		return 1;
+ 
++	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
++			  env_get("bootfile"))) {
++		printf("Out of memory\n");
++		return CMD_RET_FAILURE;
++	}
+ 	/*
+ 	 * Keep trying paths until we successfully get a file we're looking
+ 	 * for.
+@@ -144,6 +147,7 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	    pxe_mac_path(&ctx, pxefile_addr_r) > 0 ||
+ 	    pxe_ipaddr_paths(&ctx, pxefile_addr_r) > 0) {
+ 		printf("Config file found\n");
++		pxe_destroy_ctx(&ctx);
+ 
+ 		return 0;
+ 	}
+@@ -152,12 +156,14 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 		if (get_pxelinux_path(&ctx, pxe_default_paths[i],
+ 				      pxefile_addr_r) > 0) {
+ 			printf("Config file found\n");
++			pxe_destroy_ctx(&ctx);
+ 			return 0;
+ 		}
+ 		i++;
+ 	}
+ 
+ 	printf("Config file not found\n");
++	pxe_destroy_ctx(&ctx);
+ 
+ 	return 1;
+ }
+@@ -175,8 +181,6 @@ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	struct pxe_context ctx;
+ 	int ret;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false);
+-
+ 	if (argc == 1) {
+ 		pxefile_addr_str = from_env("pxefile_addr_r");
+ 		if (!pxefile_addr_str)
+@@ -193,7 +197,13 @@ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 		return 1;
+ 	}
+ 
++	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
++			  env_get("bootfile"))) {
++		printf("Out of memory\n");
++		return CMD_RET_FAILURE;
++	}
+ 	ret = pxe_process(&ctx, pxefile_addr_r, false);
++	pxe_destroy_ctx(&ctx);
+ 	if (ret)
+ 		return CMD_RET_FAILURE;
+ 
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index 7ee14df79e..c45fed774d 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -59,6 +59,7 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		      char *const argv[])
+ {
+ 	unsigned long pxefile_addr_r;
++	pxe_getfile_func getfile;
+ 	struct pxe_context ctx;
+ 	char *pxefile_addr_str;
+ 	char *filename;
+@@ -89,13 +90,12 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		env_set("bootfile", filename);
+ 	}
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, NULL, NULL, true);
+ 	if (strstr(argv[3], "ext2")) {
+-		ctx.getfile = do_get_ext2;
++		getfile = do_get_ext2;
+ 	} else if (strstr(argv[3], "fat")) {
+-		ctx.getfile = do_get_fat;
++		getfile = do_get_fat;
+ 	} else if (strstr(argv[3], "any")) {
+-		ctx.getfile = do_get_any;
++		getfile = do_get_any;
+ 	} else {
+ 		printf("Invalid filesystem: %s\n", argv[3]);
+ 		return 1;
+@@ -108,12 +108,19 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		return 1;
+ 	}
+ 
++	if (pxe_setup_ctx(&ctx, cmdtp, getfile, NULL, true, filename)) {
++		printf("Out of memory\n");
++		return CMD_RET_FAILURE;
++	}
++
+ 	if (get_pxe_file(&ctx, filename, pxefile_addr_r) < 0) {
+ 		printf("Error reading config file\n");
++		pxe_destroy_ctx(&ctx);
+ 		return 1;
+ 	}
+ 
+ 	ret = pxe_process(&ctx, pxefile_addr_r, prompt);
++	pxe_destroy_ctx(&ctx);
+ 	if (ret)
+ 		return CMD_RET_FAILURE;
+ 
+diff --git a/include/pxe_utils.h b/include/pxe_utils.h
+index 0cae0dabec..543d0245c8 100644
+--- a/include/pxe_utils.h
++++ b/include/pxe_utils.h
+@@ -86,6 +86,8 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
+  * @getfile: Function called by PXE to read a file
+  * @userdata: Data the caller requires for @getfile
+  * @allow_abs_path: true to allow absolute paths
++ * @bootdir: Directory that files are loaded from ("" if no directory). This is
++ *	allocated
+  */
+ struct pxe_context {
+ 	struct cmd_tbl *cmdtp;
+@@ -102,6 +104,7 @@ struct pxe_context {
+ 
+ 	void *userdata;
+ 	bool allow_abs_path;
++	char *bootdir;
+ };
+ 
+ /**
+@@ -197,10 +200,20 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len);
+  * @getfile: Function to call to read a file
+  * @userdata: Data the caller requires for @getfile - stored in ctx->userdata
+  * @allow_abs_path: true to allow absolute paths
++ * @bootfile: Bootfile whose directory loaded files are relative to, NULL if
++ *	none
++ * @return 0 if OK, -ENOMEM if out of memory
+  */
+-void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+-		   pxe_getfile_func getfile, void *userdata,
+-		   bool allow_abs_path);
++int pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
++		  pxe_getfile_func getfile, void *userdata,
++		  bool allow_abs_path, const char *bootfile);
++
++/**
++ * pxe_destroy_ctx() - Destroy a PXE context
++ *
++ * @ctx: Context to destroy
++ */
++void pxe_destroy_ctx(struct pxe_context *ctx);
+ 
+ /**
+  * pxe_process() - Process a PXE file through to boot
+-- 
+2.25.1
+

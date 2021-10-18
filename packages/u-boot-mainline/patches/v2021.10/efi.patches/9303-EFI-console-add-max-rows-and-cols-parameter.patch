@@ -1,0 +1,30 @@
+From 332b5e87456089dc75471c16190157e81871bd97 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 3 Aug 2021 11:59:42 +0800
+Subject: [PATCH 1/2] EFI: console: add max rows and cols parameter
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ lib/efi_loader/Kconfig | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/lib/efi_loader/Kconfig b/lib/efi_loader/Kconfig
+index 6c4e93f1..d46b3f7d 100644
+--- a/lib/efi_loader/Kconfig
++++ b/lib/efi_loader/Kconfig
+@@ -377,4 +377,12 @@ config EFI_CONSOLE_UTF_BLOCK
+ 	bool "console unicode chars replace by . if vidconsole is active"
+ 	default n
+ 
++config EFI_CONSOLE_MAX_ROWS
++	int "setup console max rows"
++	default 0
++
++config EFI_CONSOLE_MAX_COLS
++	int "setup console max cols"
++	default 0
++
+ endif
+-- 
+2.25.1
+

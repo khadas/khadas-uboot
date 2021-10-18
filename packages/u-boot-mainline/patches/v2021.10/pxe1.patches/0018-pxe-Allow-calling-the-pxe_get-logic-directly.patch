@@ -1,0 +1,165 @@
+From f736a33ae0b4ca428030f11d7a9b65137246cd21 Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:11 -0600
+Subject: [PATCH 18/18] pxe: Allow calling the pxe_get logic directly
+
+Refactor this code so that we can call the 'pxe get' command without going
+through the command-line interpreter. This makes it easier to get the
+information we need, without going through environment variables.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ cmd/pxe.c           | 92 +++++++++++++++++++++++++++++----------------
+ include/pxe_utils.h | 14 +++++++
+ 2 files changed, 73 insertions(+), 33 deletions(-)
+
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index 81703386c4..db8e4697f2 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -104,6 +104,49 @@ static int pxe_ipaddr_paths(struct pxe_context *ctx, unsigned long pxefile_addr_
+ 
+ 	return -ENOENT;
+ }
++
++int pxe_get(ulong pxefile_addr_r, char **bootdirp, ulong *sizep)
++{
++	struct cmd_tbl cmdtp[] = {};	/* dummy */
++	struct pxe_context ctx;
++	int i;
++
++	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
++			  env_get("bootfile")))
++		return -ENOMEM;
++	/*
++	 * Keep trying paths until we successfully get a file we're looking
++	 * for.
++	 */
++	if (pxe_uuid_path(&ctx, pxefile_addr_r) > 0 ||
++	    pxe_mac_path(&ctx, pxefile_addr_r) > 0 ||
++	    pxe_ipaddr_paths(&ctx, pxefile_addr_r) > 0)
++		goto done;
++
++	i = 0;
++	while (pxe_default_paths[i]) {
++		if (get_pxelinux_path(&ctx, pxe_default_paths[i],
++				      pxefile_addr_r) > 0)
++			goto done;
++		i++;
++	}
++
++	pxe_destroy_ctx(&ctx);
++
++	return -ENOENT;
++done:
++	*bootdirp = env_get("bootfile");
++
++	/*
++	 * The PXE file size is returned but not the name. It is probably not
++	 * that useful.
++	 */
++	*sizep = ctx.pxe_file_size;
++	pxe_destroy_ctx(&ctx);
++
++	return 0;
++}
++
+ /*
+  * Entry point for the 'pxe get' command.
+  * This Follows pxelinux's rules to download a config file from a tftp server.
+@@ -122,9 +165,10 @@ static int
+ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ {
+ 	char *pxefile_addr_str;
+-	unsigned long pxefile_addr_r;
+-	struct pxe_context ctx;
+-	int err, i = 0;
++	ulong pxefile_addr_r;
++	char *fname;
++	ulong size;
++	int ret;
+ 
+ 	if (argc != 1)
+ 		return CMD_RET_USAGE;
+@@ -134,43 +178,25 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	if (!pxefile_addr_str)
+ 		return 1;
+ 
+-	err = strict_strtoul(pxefile_addr_str, 16,
++	ret = strict_strtoul(pxefile_addr_str, 16,
+ 			     (unsigned long *)&pxefile_addr_r);
+-	if (err < 0)
++	if (ret < 0)
+ 		return 1;
+ 
+-	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
+-			  env_get("bootfile"))) {
++	ret = pxe_get(pxefile_addr_r, &fname, &size);
++	switch (ret) {
++	case 0:
++		printf("Config file '%s' found\n", fname);
++		break;
++	case -ENOMEM:
+ 		printf("Out of memory\n");
+ 		return CMD_RET_FAILURE;
++	default:
++		printf("Config file not found\n");
++		return CMD_RET_FAILURE;
+ 	}
+-	/*
+-	 * Keep trying paths until we successfully get a file we're looking
+-	 * for.
+-	 */
+-	if (pxe_uuid_path(&ctx, pxefile_addr_r) > 0 ||
+-	    pxe_mac_path(&ctx, pxefile_addr_r) > 0 ||
+-	    pxe_ipaddr_paths(&ctx, pxefile_addr_r) > 0) {
+-		printf("Config file found\n");
+-		pxe_destroy_ctx(&ctx);
+-
+-		return 0;
+-	}
+-
+-	while (pxe_default_paths[i]) {
+-		if (get_pxelinux_path(&ctx, pxe_default_paths[i],
+-				      pxefile_addr_r) > 0) {
+-			printf("Config file found\n");
+-			pxe_destroy_ctx(&ctx);
+-			return 0;
+-		}
+-		i++;
+-	}
+-
+-	printf("Config file not found\n");
+-	pxe_destroy_ctx(&ctx);
+ 
+-	return 1;
++	return 0;
+ }
+ 
+ /*
+diff --git a/include/pxe_utils.h b/include/pxe_utils.h
+index 194a5ed8cc..b7037f841a 100644
+--- a/include/pxe_utils.h
++++ b/include/pxe_utils.h
+@@ -236,4 +236,18 @@ int pxe_process(struct pxe_context *ctx, ulong pxefile_addr_r, bool prompt);
+  */
+ int pxe_get_file_size(ulong *sizep);
+ 
++/**
++ * pxe_get() - Get the PXE file from the server
++ *
++ * This tries various filenames to obtain a PXE file
++ *
++ * @pxefile_addr_r: Address to put file
++ * @bootdirp: Returns the boot filename, or NULL if none. This is the 'bootfile'
++ *	option provided by the DHCP server. If none, returns NULL. For example,
++ *	"rpi/info", which indicates that all files should be fetched from the
++ *	"rpi/" subdirectory
++ * @sizep: Size of the PXE file (not bootfile)
++ */
++int pxe_get(ulong pxefile_addr_r, char **bootdirp, ulong *sizep);
++
+ #endif /* __PXE_UTILS_H */
+-- 
+2.25.1
+

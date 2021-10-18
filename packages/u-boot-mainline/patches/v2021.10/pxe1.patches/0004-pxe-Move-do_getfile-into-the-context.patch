@@ -1,0 +1,213 @@
+From ec0c79292f6d2b8873f8279dc421662fde3d55fa Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:47:57 -0600
+Subject: [PATCH 04/18] pxe: Move do_getfile() into the context
+
+Rather than having a global variable, pass the function as part of the
+context.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ cmd/pxe.c       | 10 ++++------
+ cmd/pxe_utils.c |  9 ++++-----
+ cmd/pxe_utils.h | 20 +++++++++++++++++---
+ cmd/sysboot.c   | 20 ++++++++++----------
+ 4 files changed, 35 insertions(+), 24 deletions(-)
+
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index 17ce54fc04..70dbde3a63 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -24,7 +24,7 @@ const char *pxe_default_paths[] = {
+ 	NULL
+ };
+ 
+-static int do_get_tftp(struct cmd_tbl *cmdtp, const char *file_path,
++static int do_get_tftp(struct pxe_context *ctx, const char *file_path,
+ 		       char *file_addr)
+ {
+ 	char *tftp_argv[] = {"tftp", NULL, NULL, NULL};
+@@ -32,7 +32,7 @@ static int do_get_tftp(struct cmd_tbl *cmdtp, const char *file_path,
+ 	tftp_argv[1] = file_addr;
+ 	tftp_argv[2] = (void *)file_path;
+ 
+-	if (do_tftpb(cmdtp, 0, 3, tftp_argv))
++	if (do_tftpb(ctx->cmdtp, 0, 3, tftp_argv))
+ 		return -ENOENT;
+ 
+ 	return 1;
+@@ -121,8 +121,7 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	struct pxe_context ctx;
+ 	int err, i = 0;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp);
+-	do_getfile = do_get_tftp;
++	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp);
+ 
+ 	if (argc != 1)
+ 		return CMD_RET_USAGE;
+@@ -176,8 +175,7 @@ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	char *pxefile_addr_str;
+ 	struct pxe_context ctx;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp);
+-	do_getfile = do_get_tftp;
++	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp);
+ 
+ 	if (argc == 1) {
+ 		pxefile_addr_str = from_env("pxefile_addr_r");
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 280be55d9b..2caae6d155 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -94,9 +94,6 @@ static int get_bootfile_path(const char *file_path, char *bootfile_path,
+ 	return 1;
+ }
+ 
+-int (*do_getfile)(struct cmd_tbl *cmdtp, const char *file_path,
+-		  char *file_addr);
+-
+ /*
+  * As in pxelinux, paths to files referenced from files we retrieve are
+  * relative to the location of bootfile. get_relfile takes such a path and
+@@ -133,7 +130,7 @@ static int get_relfile(struct pxe_context *ctx, const char *file_path,
+ 
+ 	sprintf(addr_buf, "%lx", file_addr);
+ 
+-	return do_getfile(ctx->cmdtp, relfile, addr_buf);
++	return ctx->getfile(ctx, relfile, addr_buf);
+ }
+ 
+ int get_pxe_file(struct pxe_context *ctx, const char *file_path,
+@@ -1434,7 +1431,9 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
+ 	boot_unattempted_labels(ctx, cfg);
+ }
+ 
+-void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp)
++void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
++		   pxe_getfile_func getfile)
+ {
+ 	ctx->cmdtp = cmdtp;
++	ctx->getfile = getfile;
+ }
+diff --git a/cmd/pxe_utils.h b/cmd/pxe_utils.h
+index cd0d337176..ca2696f48b 100644
+--- a/cmd/pxe_utils.h
++++ b/cmd/pxe_utils.h
+@@ -77,16 +77,28 @@ struct pxe_menu {
+ 
+ extern bool is_pxe;
+ 
+-extern int (*do_getfile)(struct cmd_tbl *cmdtp, const char *file_path,
+-			 char *file_addr);
++struct pxe_context;
++typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
++				char *file_addr);
+ 
+ /**
+  * struct pxe_context - context information for PXE parsing
+  *
+  * @cmdtp: Pointer to command table to use when calling other commands
++ * @getfile: Function called by PXE to read a file
+  */
+ struct pxe_context {
+ 	struct cmd_tbl *cmdtp;
++	/**
++	 * getfile() - read a file
++	 *
++	 * @ctx: PXE context
++	 * @file_path: Path to the file
++	 * @file_addr: String containing the hex address to put the file in
++	 *	memory
++	 * Return 0 if OK, -ve on error
++	 */
++	pxe_getfile_func getfile;
+ };
+ 
+ /**
+@@ -179,7 +191,9 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len);
+  *
+  * @ctx: Context to set up
+  * @cmdtp: Command table entry which started this action
++ * @getfile: Function to call to read a file
+  */
+-void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp);
++void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
++		   pxe_getfile_func getfile);
+ 
+ #endif /* __PXE_UTILS_H */
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index 9ba713c8aa..082f23543d 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -8,7 +8,7 @@
+ 
+ static char *fs_argv[5];
+ 
+-static int do_get_ext2(struct cmd_tbl *cmdtp, const char *file_path,
++static int do_get_ext2(struct pxe_context *ctx, const char *file_path,
+ 		       char *file_addr)
+ {
+ #ifdef CONFIG_CMD_EXT2
+@@ -16,13 +16,13 @@ static int do_get_ext2(struct cmd_tbl *cmdtp, const char *file_path,
+ 	fs_argv[3] = file_addr;
+ 	fs_argv[4] = (void *)file_path;
+ 
+-	if (!do_ext2load(cmdtp, 0, 5, fs_argv))
++	if (!do_ext2load(ctx->cmdtp, 0, 5, fs_argv))
+ 		return 1;
+ #endif
+ 	return -ENOENT;
+ }
+ 
+-static int do_get_fat(struct cmd_tbl *cmdtp, const char *file_path,
++static int do_get_fat(struct pxe_context *ctx, const char *file_path,
+ 		      char *file_addr)
+ {
+ #ifdef CONFIG_CMD_FAT
+@@ -30,13 +30,13 @@ static int do_get_fat(struct cmd_tbl *cmdtp, const char *file_path,
+ 	fs_argv[3] = file_addr;
+ 	fs_argv[4] = (void *)file_path;
+ 
+-	if (!do_fat_fsload(cmdtp, 0, 5, fs_argv))
++	if (!do_fat_fsload(ctx->cmdtp, 0, 5, fs_argv))
+ 		return 1;
+ #endif
+ 	return -ENOENT;
+ }
+ 
+-static int do_get_any(struct cmd_tbl *cmdtp, const char *file_path,
++static int do_get_any(struct pxe_context *ctx, const char *file_path,
+ 		      char *file_addr)
+ {
+ #ifdef CONFIG_CMD_FS_GENERIC
+@@ -44,7 +44,7 @@ static int do_get_any(struct cmd_tbl *cmdtp, const char *file_path,
+ 	fs_argv[3] = file_addr;
+ 	fs_argv[4] = (void *)file_path;
+ 
+-	if (!do_load(cmdtp, 0, 5, fs_argv, FS_TYPE_ANY))
++	if (!do_load(ctx->cmdtp, 0, 5, fs_argv, FS_TYPE_ANY))
+ 		return 1;
+ #endif
+ 	return -ENOENT;
+@@ -91,13 +91,13 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		env_set("bootfile", filename);
+ 	}
+ 
+-	pxe_setup_ctx(&ctx, cmdtp);
++	pxe_setup_ctx(&ctx, cmdtp, NULL);
+ 	if (strstr(argv[3], "ext2")) {
+-		do_getfile = do_get_ext2;
++		ctx.getfile = do_get_ext2;
+ 	} else if (strstr(argv[3], "fat")) {
+-		do_getfile = do_get_fat;
++		ctx.getfile = do_get_fat;
+ 	} else if (strstr(argv[3], "any")) {
+-		do_getfile = do_get_any;
++		ctx.getfile = do_get_any;
+ 	} else {
+ 		printf("Invalid filesystem: %s\n", argv[3]);
+ 		return 1;
+-- 
+2.25.1
+

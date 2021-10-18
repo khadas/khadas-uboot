@@ -1,0 +1,102 @@
+From f735fefe4bdff129fc7cde7ac644c61617a5527c Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 8 Jun 2021 18:17:11 +0800
+Subject: [PATCH 2/2] mach-rockchip board add boot_source
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ arch/arm/mach-rockchip/board.c | 61 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 59 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-rockchip/board.c b/arch/arm/mach-rockchip/board.c
+index 5304eb05..6bd94fcd 100644
+--- a/arch/arm/mach-rockchip/board.c
++++ b/arch/arm/mach-rockchip/board.c
+@@ -20,6 +20,62 @@
+ #include <asm/arch-rockchip/misc.h>
+ #include <power/regulator.h>
+ 
++#include <env.h>
++#include <asm/arch-rockchip/bootrom.h>
++
++int rk_get_boot_device(void)
++{
++    int bootdevice_id = env_get_ulong("boot_source_id", 10, 0);
++
++    if ( bootdevice_id > 0 )
++	return bootdevice_id;
++
++    bootdevice_id = readl(0x01000000);
++
++    if ( bootdevice_id < 100 || bootdevice_id > 120 ) {
++	return 0;
++    }
++
++    return bootdevice_id - 100;
++}
++
++static void rk_set_boot_source(void)
++{
++
++    const char *source;
++    int boot_device_id = rk_get_boot_device();
++    switch (boot_device_id) {
++    case BROM_BOOTSOURCE_EMMC:
++	source = "emmc";
++	break;
++
++    case BROM_BOOTSOURCE_NAND:
++	source = "nand";
++	break;
++
++    case BROM_BOOTSOURCE_SPINOR:
++	source = "spi";
++	break;
++
++    case BROM_BOOTSOURCE_SD:
++	source = "sd";
++	break;
++
++    case BROM_BOOTSOURCE_USB:
++	source = "usb";
++	break;
++
++    default:
++	source = "unknown";
++    }
++
++    //printf("*** BOOT_SOURCE %u = %s ***\n", boot_device_id, source);
++
++    env_set("boot_source", source);
++    env_set_ulong("boot_source_id", boot_device_id);
++
++}
++
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+ __weak int rk_board_late_init(void)
+@@ -30,10 +86,11 @@ __weak int rk_board_late_init(void)
+ int board_late_init(void)
+ {
+ 	setup_boot_mode();
+-
++	rk_set_boot_source();
+ 	return rk_board_late_init();
+ }
+ 
++
+ int board_init(void)
+ {
+ 	int ret;
+@@ -43,7 +100,7 @@ int board_init(void)
+ 	if (ret)
+ 		debug("%s: Cannot enable boot on regulator\n", __func__);
+ #endif
+-
++	rk_set_boot_source();
+ 	return 0;
+ }
+ 
+-- 
+2.25.1
+

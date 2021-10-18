@@ -1,0 +1,381 @@
+From fc61208c3eb488c54138b3ccf4cc6648539759c3 Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:47:54 -0600
+Subject: [PATCH 01/18] Create a new boot/ directory
+
+Quite a lot of the code in common/relates to booting and images. Before
+adding more it seems like a good time to move the code into its own
+directory.
+
+Most files with 'boot' or 'image' in them are moved, except:
+
+- autoboot.c which relates to U-Boot automatically running a script
+- bootstage.c which relates to U-Boot timing
+
+Drop the removal of boot* files from the output directory, since this
+interfers with the symlinks created by tools and there does not appear
+to be any such file from my brief testing.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ Kconfig                             |  2 ++
+ Makefile                            |  3 ++-
+ README                              |  1 +
+ common/Kconfig.boot => boot/Kconfig |  0
+ boot/Makefile                       | 34 +++++++++++++++++++++++++++++
+ {common => boot}/android_ab.c       |  0
+ {common => boot}/boot_fit.c         |  0
+ {common => boot}/bootm.c            |  0
+ {common => boot}/bootm_os.c         |  0
+ {common => boot}/bootretry.c        |  0
+ {common => boot}/common_fit.c       |  0
+ {common => boot}/fdt_region.c       |  0
+ {common => boot}/image-android-dt.c |  0
+ {common => boot}/image-android.c    |  0
+ {common => boot}/image-board.c      |  0
+ {common => boot}/image-cipher.c     |  0
+ {common => boot}/image-fdt.c        |  0
+ {common => boot}/image-fit-sig.c    |  0
+ {common => boot}/image-fit.c        |  0
+ {common => boot}/image-host.c       |  0
+ {common => boot}/image-sig.c        |  0
+ {common => boot}/image.c            |  0
+ common/Kconfig                      |  2 --
+ common/Makefile                     | 22 -------------------
+ doc/android/boot-image.rst          |  2 +-
+ scripts/Makefile.spl                |  4 ++--
+ tools/Makefile                      | 18 +++++++--------
+ 27 files changed, 51 insertions(+), 37 deletions(-)
+ rename common/Kconfig.boot => boot/Kconfig (100%)
+ create mode 100644 boot/Makefile
+ rename {common => boot}/android_ab.c (100%)
+ rename {common => boot}/boot_fit.c (100%)
+ rename {common => boot}/bootm.c (100%)
+ rename {common => boot}/bootm_os.c (100%)
+ rename {common => boot}/bootretry.c (100%)
+ rename {common => boot}/common_fit.c (100%)
+ rename {common => boot}/fdt_region.c (100%)
+ rename {common => boot}/image-android-dt.c (100%)
+ rename {common => boot}/image-android.c (100%)
+ rename {common => boot}/image-board.c (100%)
+ rename {common => boot}/image-cipher.c (100%)
+ rename {common => boot}/image-fdt.c (100%)
+ rename {common => boot}/image-fit-sig.c (100%)
+ rename {common => boot}/image-fit.c (100%)
+ rename {common => boot}/image-host.c (100%)
+ rename {common => boot}/image-sig.c (100%)
+ rename {common => boot}/image.c (100%)
+
+diff --git a/Kconfig b/Kconfig
+index 931a22806e..c46f4fce86 100644
+--- a/Kconfig
++++ b/Kconfig
+@@ -466,6 +466,8 @@ endmenu		# General setup
+ 
+ source "api/Kconfig"
+ 
++source "boot/Kconfig"
++
+ source "common/Kconfig"
+ 
+ source "cmd/Kconfig"
+diff --git a/Makefile b/Makefile
+index f911f70344..4e064acdcf 100644
+--- a/Makefile
++++ b/Makefile
+@@ -804,6 +804,7 @@ HAVE_VENDOR_COMMON_LIB = $(if $(wildcard $(srctree)/board/$(VENDOR)/common/Makef
+ 
+ libs-$(CONFIG_API) += api/
+ libs-$(HAVE_VENDOR_COMMON_LIB) += board/$(VENDOR)/common/
++libs-y += boot/
+ libs-y += cmd/
+ libs-y += common/
+ libs-$(CONFIG_OF_EMBED) += dts/
+@@ -2076,7 +2077,7 @@ CLEAN_DIRS  += $(MODVERDIR) \
+ 			$(filter-out include, $(shell ls -1 $d 2>/dev/null))))
+ 
+ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h tools/version.h \
+-	       boot* u-boot* MLO* SPL System.map fit-dtb.blob* \
++	       u-boot* MLO* SPL System.map fit-dtb.blob* \
+ 	       u-boot-ivt.img.log u-boot-dtb.imx.log SPL.log u-boot.imx.log \
+ 	       lpc32xx-* bl31.c bl31.elf bl31_*.bin image.map tispl.bin* \
+ 	       idbloader.img flash.bin flash.log defconfig keep-syms-lto.c
+diff --git a/README b/README
+index 840b192aae..49c79ca6a2 100644
+--- a/README
++++ b/README
+@@ -144,6 +144,7 @@ Directory Hierarchy:
+   /xtensa		Files generic to Xtensa architecture
+ /api			Machine/arch-independent API for external apps
+ /board			Board-dependent files
++/boot			Support for images and booting
+ /cmd			U-Boot commands functions
+ /common			Misc architecture-independent functions
+ /configs		Board default configuration files
+diff --git a/common/Kconfig.boot b/boot/Kconfig
+similarity index 100%
+rename from common/Kconfig.boot
+rename to boot/Kconfig
+diff --git a/boot/Makefile b/boot/Makefile
+new file mode 100644
+index 0000000000..a19e85cf6c
+--- /dev/null
++++ b/boot/Makefile
+@@ -0,0 +1,34 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# (C) Copyright 2004-2006
++# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
++
++ifndef CONFIG_SPL_BUILD
++
++# This option is not just y/n - it can have a numeric value
++ifdef CONFIG_BOOT_RETRY_TIME
++obj-y += bootretry.o
++endif
++
++obj-$(CONFIG_CMD_BOOTM) += bootm.o bootm_os.o
++obj-$(CONFIG_CMD_BOOTZ) += bootm.o bootm_os.o
++obj-$(CONFIG_CMD_BOOTI) += bootm.o bootm_os.o
++
++endif
++
++obj-y += image.o image-board.o
++obj-$(CONFIG_ANDROID_AB) += android_ab.o
++obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o image-android-dt.o
++obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += image-fdt.o
++obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += fdt_region.o
++obj-$(CONFIG_$(SPL_TPL_)FIT) += image-fit.o
++obj-$(CONFIG_$(SPL_)MULTI_DTB_FIT) += boot_fit.o common_fit.o
++obj-$(CONFIG_$(SPL_TPL_)IMAGE_SIGN_INFO) += image-sig.o
++obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += image-fit-sig.o
++obj-$(CONFIG_$(SPL_TPL_)FIT_CIPHER) += image-cipher.o
++
++obj-$(CONFIG_CMD_ADTIMG) += image-android-dt.o
++
++ifdef CONFIG_SPL_BUILD
++obj-$(CONFIG_SPL_LOAD_FIT) += common_fit.o
++endif
+diff --git a/common/android_ab.c b/boot/android_ab.c
+similarity index 100%
+rename from common/android_ab.c
+rename to boot/android_ab.c
+diff --git a/common/boot_fit.c b/boot/boot_fit.c
+similarity index 100%
+rename from common/boot_fit.c
+rename to boot/boot_fit.c
+diff --git a/common/bootm.c b/boot/bootm.c
+similarity index 100%
+rename from common/bootm.c
+rename to boot/bootm.c
+diff --git a/common/bootm_os.c b/boot/bootm_os.c
+similarity index 100%
+rename from common/bootm_os.c
+rename to boot/bootm_os.c
+diff --git a/common/bootretry.c b/boot/bootretry.c
+similarity index 100%
+rename from common/bootretry.c
+rename to boot/bootretry.c
+diff --git a/common/common_fit.c b/boot/common_fit.c
+similarity index 100%
+rename from common/common_fit.c
+rename to boot/common_fit.c
+diff --git a/common/fdt_region.c b/boot/fdt_region.c
+similarity index 100%
+rename from common/fdt_region.c
+rename to boot/fdt_region.c
+diff --git a/common/image-android-dt.c b/boot/image-android-dt.c
+similarity index 100%
+rename from common/image-android-dt.c
+rename to boot/image-android-dt.c
+diff --git a/common/image-android.c b/boot/image-android.c
+similarity index 100%
+rename from common/image-android.c
+rename to boot/image-android.c
+diff --git a/common/image-board.c b/boot/image-board.c
+similarity index 100%
+rename from common/image-board.c
+rename to boot/image-board.c
+diff --git a/common/image-cipher.c b/boot/image-cipher.c
+similarity index 100%
+rename from common/image-cipher.c
+rename to boot/image-cipher.c
+diff --git a/common/image-fdt.c b/boot/image-fdt.c
+similarity index 100%
+rename from common/image-fdt.c
+rename to boot/image-fdt.c
+diff --git a/common/image-fit-sig.c b/boot/image-fit-sig.c
+similarity index 100%
+rename from common/image-fit-sig.c
+rename to boot/image-fit-sig.c
+diff --git a/common/image-fit.c b/boot/image-fit.c
+similarity index 100%
+rename from common/image-fit.c
+rename to boot/image-fit.c
+diff --git a/common/image-host.c b/boot/image-host.c
+similarity index 100%
+rename from common/image-host.c
+rename to boot/image-host.c
+diff --git a/common/image-sig.c b/boot/image-sig.c
+similarity index 100%
+rename from common/image-sig.c
+rename to boot/image-sig.c
+diff --git a/common/image.c b/boot/image.c
+similarity index 100%
+rename from common/image.c
+rename to boot/image.c
+diff --git a/common/Kconfig b/common/Kconfig
+index d6f77ab7b9..fdcf4536d0 100644
+--- a/common/Kconfig
++++ b/common/Kconfig
+@@ -1,5 +1,3 @@
+-source "common/Kconfig.boot"
+-
+ menu "Console"
+ 
+ config MENU
+diff --git a/common/Makefile b/common/Makefile
+index e7839027b6..afaf8e5048 100644
+--- a/common/Makefile
++++ b/common/Makefile
+@@ -11,21 +11,12 @@ obj-y += exports.o
+ obj-$(CONFIG_HUSH_PARSER) += cli_hush.o
+ obj-$(CONFIG_AUTOBOOT) += autoboot.o
+ 
+-# This option is not just y/n - it can have a numeric value
+-ifdef CONFIG_BOOT_RETRY_TIME
+-obj-y += bootretry.o
+-endif
+-
+ # # boards
+ obj-y += board_f.o
+ obj-y += board_r.o
+ obj-$(CONFIG_DISPLAY_BOARDINFO) += board_info.o
+ obj-$(CONFIG_DISPLAY_BOARDINFO_LATE) += board_info.o
+ 
+-obj-$(CONFIG_CMD_BOOTM) += bootm.o bootm_os.o
+-obj-$(CONFIG_CMD_BOOTZ) += bootm.o bootm_os.o
+-obj-$(CONFIG_CMD_BOOTI) += bootm.o bootm_os.o
+-
+ obj-$(CONFIG_CMD_BEDBUG) += bedbug.o
+ obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += fdt_support.o
+ obj-$(CONFIG_MII) += miiphyutil.o
+@@ -65,7 +56,6 @@ ifdef CONFIG_SPL_BUILD
+ ifdef CONFIG_SPL_DFU
+ obj-$(CONFIG_DFU_OVER_USB) += dfu.o
+ endif
+-obj-$(CONFIG_SPL_LOAD_FIT) += common_fit.o
+ obj-$(CONFIG_SPL_NET) += miiphyutil.o
+ obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += fdt_support.o
+ 
+@@ -101,23 +91,11 @@ obj-y += malloc_simple.o
+ endif
+ endif
+ 
+-obj-y += image.o image-board.o
+ obj-$(CONFIG_$(SPL_TPL_)HASH) += hash.o
+-obj-$(CONFIG_ANDROID_AB) += android_ab.o
+-obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o image-android-dt.o
+-obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += image-fdt.o
+-obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += fdt_region.o
+-obj-$(CONFIG_$(SPL_TPL_)FIT) += image-fit.o
+-obj-$(CONFIG_$(SPL_)MULTI_DTB_FIT) += boot_fit.o common_fit.o
+-obj-$(CONFIG_$(SPL_TPL_)IMAGE_SIGN_INFO) += image-sig.o
+-obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += image-fit-sig.o
+-obj-$(CONFIG_$(SPL_TPL_)FIT_CIPHER) += image-cipher.o
+ obj-$(CONFIG_IO_TRACE) += iotrace.o
+ obj-y += memsize.o
+ obj-y += stdio.o
+ 
+-obj-$(CONFIG_CMD_ADTIMG) += image-android-dt.o
+-
+ ifdef CONFIG_CMD_EEPROM_LAYOUT
+ obj-y += eeprom/eeprom_field.o eeprom/eeprom_layout.o
+ endif
+diff --git a/doc/android/boot-image.rst b/doc/android/boot-image.rst
+index fa8f2a47ee..71db02521b 100644
+--- a/doc/android/boot-image.rst
++++ b/doc/android/boot-image.rst
+@@ -139,7 +139,7 @@ overview on the whole Android 10 boot process can be found at [8]_.
+ C API for working with Android Boot Image format
+ ------------------------------------------------
+ 
+-.. kernel-doc:: common/image-android.c
++.. kernel-doc:: boot/image-android.c
+    :internal:
+ 
+ References
+diff --git a/scripts/Makefile.spl b/scripts/Makefile.spl
+index 6f26eb1fa1..06f27dee3d 100644
+--- a/scripts/Makefile.spl
++++ b/scripts/Makefile.spl
+@@ -92,10 +92,10 @@ libs-y += common/init/
+ 
+ # Special handling for a few options which support SPL/TPL
+ ifeq ($(CONFIG_TPL_BUILD),y)
+-libs-$(CONFIG_TPL_LIBCOMMON_SUPPORT) += common/ cmd/ env/
++libs-$(CONFIG_TPL_LIBCOMMON_SUPPORT) += boot/ common/ cmd/ env/
+ libs-$(CONFIG_TPL_LIBGENERIC_SUPPORT) += lib/
+ else
+-libs-$(CONFIG_SPL_LIBCOMMON_SUPPORT) += common/ cmd/ env/
++libs-$(CONFIG_SPL_LIBCOMMON_SUPPORT) += boot/ common/ cmd/ env/
+ libs-$(CONFIG_SPL_LIBGENERIC_SUPPORT) += lib/
+ ifdef CONFIG_SPL_FRAMEWORK
+ libs-$(CONFIG_PARTITIONS) += disk/
+diff --git a/tools/Makefile b/tools/Makefile
+index 999fd46531..6519a66e9a 100644
+--- a/tools/Makefile
++++ b/tools/Makefile
+@@ -76,9 +76,9 @@ hostprogs-$(CONFIG_TOOLS_LIBCRYPTO) += fit_info fit_check_sign
+ 
+ hostprogs-$(CONFIG_CMD_BOOTEFI_SELFTEST) += file2include
+ 
+-FIT_OBJS-y := fit_common.o fit_image.o image-host.o common/image-fit.o
+-FIT_SIG_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := image-sig-host.o common/image-fit-sig.o
+-FIT_CIPHER_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := common/image-cipher.o
++FIT_OBJS-y := fit_common.o fit_image.o image-host.o boot/image-fit.o
++FIT_SIG_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := image-sig-host.o boot/image-fit-sig.o
++FIT_CIPHER_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := boot/image-cipher.o
+ 
+ # The following files are synced with upstream DTC.
+ # Use synced versions from scripts/dtc/libfdt/.
+@@ -106,14 +106,14 @@ dumpimage-mkimage-objs := aisimage.o \
+ 			$(FIT_OBJS-y) \
+ 			$(FIT_SIG_OBJS-y) \
+ 			$(FIT_CIPHER_OBJS-y) \
+-			common/fdt_region.o \
+-			common/bootm.o \
++			boot/fdt_region.o \
++			boot/bootm.o \
+ 			lib/crc32.o \
+ 			default_image.o \
+ 			lib/fdtdec_common.o \
+ 			lib/fdtdec.o \
+-			common/image.o \
+-			common/image-host.o \
++			boot/image.o \
++			boot/image-host.o \
+ 			imagetool.o \
+ 			imximage.o \
+ 			imx8image.o \
+@@ -227,7 +227,7 @@ hostprogs-$(CONFIG_ARCH_OCTEON) += update_octeon_header
+ update_octeon_header-objs := update_octeon_header.o lib/crc32.o
+ 
+ hostprogs-y += fdtgrep
+-fdtgrep-objs += $(LIBFDT_OBJS) common/fdt_region.o fdtgrep.o
++fdtgrep-objs += $(LIBFDT_OBJS) boot/fdt_region.o fdtgrep.o
+ 
+ ifneq ($(TOOLS_ONLY),y)
+ hostprogs-y += spl_size_limit
+@@ -254,7 +254,7 @@ HOSTCFLAGS_sha512.o := -pedantic -DCONFIG_SHA512 -DCONFIG_SHA384
+ quiet_cmd_wrap = WRAP    $@
+ cmd_wrap = echo "\#include <../$(patsubst $(obj)/%,%,$@)>" >$@
+ 
+-$(obj)/lib/%.c $(obj)/common/%.c $(obj)/env/%.c:
++$(obj)/boot/%.c $(obj)/common/%.c $(obj)/env/%.c $(obj)/lib/%.c:
+ 	$(call cmd,wrap)
+ 
+ clean-dirs := lib common
+-- 
+2.25.1
+

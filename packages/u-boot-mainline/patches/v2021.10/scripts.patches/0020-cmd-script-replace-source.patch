@@ -1,0 +1,40 @@
+From c2ad7553a38a31813ac99dd2a67f93f07ab14827 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 15 Oct 2021 15:28:36 +0800
+Subject: [PATCH] cmd: script replace source
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/Makefile     | 2 +-
+ cmd/cmd_script.c | 5 +++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/Makefile b/cmd/Makefile
+index cde6facf..a57cc8cb 100644
+--- a/cmd/Makefile
++++ b/cmd/Makefile
+@@ -19,7 +19,7 @@ obj-$(CONFIG_CMD_AB_SELECT) += ab_select.o
+ obj-$(CONFIG_CMD_ADC) += adc.o
+ obj-$(CONFIG_CMD_ARMFLASH) += armflash.o
+ obj-$(CONFIG_HAVE_BLOCK_DEVICE) += blk_common.o
+-obj-$(CONFIG_CMD_SOURCE) += source.o
++#obj-$(CONFIG_CMD_SOURCE) += source.o
+ obj-$(CONFIG_CMD_BCB) += bcb.o
+ obj-$(CONFIG_CMD_BDI) += bdinfo.o
+ obj-$(CONFIG_CMD_BEDBUG) += bedbug.o
+diff --git a/cmd/cmd_script.c b/cmd/cmd_script.c
+index 45b6f86c..e2234299 100644
+--- a/cmd/cmd_script.c
++++ b/cmd/cmd_script.c
+@@ -211,3 +211,8 @@ U_BOOT_CMD(
+ 	autoscr, 5, 0,	do_script,
+ 	"# run plain script from memory", script_help_text
+ );
++
++U_BOOT_CMD(
++	source, 5, 0,	do_script,
++	"# run plain script from memory", script_help_text
++);
+-- 
+2.25.1
+

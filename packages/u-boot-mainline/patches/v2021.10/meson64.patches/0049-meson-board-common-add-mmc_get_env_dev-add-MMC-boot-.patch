@@ -1,0 +1,48 @@
+From 22061cfe893e4584c010baff1d860cf1fc9fbdf1 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Mon, 18 Jan 2021 19:51:14 +0800
+Subject: [PATCH] meson: board-common: add mmc_get_env_dev add MMC boot device
+ detection for environment load
+
+Detect eMMC or SD card boot on meson boards and
+report proper MMC device for the environment loading code. This allows to
+automatically load and store environment variables on the FAT partition
+or RAW offset of the MMC device without the need to use different
+configurations on eMMC and SD card.
+
+[ Marek Szyprowski <m.szyprowski@samsung.com> has submit similar patch
+https://gitlab.denx.de/u-boot/custodians/u-boot-amlogic/-/commit/aa3c7912cb6cac8a214e5aa5a1a4251303c9a2c5
+for Odroid-C4/N2 and Khadas VIM3(l) boards. maybe possible make it as common?
+Marek patch have some problems for example if device was booted for example
+from spi mmc_get_env_dev return 1 ( is SD ) but its not right ]
+
+---
+ arch/arm/mach-meson/board-common.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/arm/mach-meson/board-common.c b/arch/arm/mach-meson/board-common.c
+index f1936556..561de4d9 100644
+--- a/arch/arm/mach-meson/board-common.c
++++ b/arch/arm/mach-meson/board-common.c
+@@ -103,6 +103,18 @@ int meson_generate_serial_ethaddr(void)
+ 	return 0;
+ }
+ 
++__weak int mmc_get_env_dev(void)
++{
++    switch (meson_get_boot_device()) {
++    case BOOT_DEVICE_EMMC:
++	return 2;
++    case BOOT_DEVICE_SD:
++	return 1;
++    default:
++	return -1;
++    }
++}
++
+ static void meson_set_boot_source(void)
+ {
+ 	const char *source;
+-- 
+2.25.1
+

@@ -1,0 +1,31 @@
+From 51b02b1da95703efa29082678aec1d4dcb954bf2 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Thu, 17 Jun 2021 12:34:54 +0800
+Subject: [PATCH] ADC: adc_channel_single_shot dash as first device
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ drivers/adc/adc-uclass.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/adc/adc-uclass.c b/drivers/adc/adc-uclass.c
+index 8781f328..6c170b06 100644
+--- a/drivers/adc/adc-uclass.c
++++ b/drivers/adc/adc-uclass.c
+@@ -197,7 +197,12 @@ int adc_channel_single_shot(const char *name, int channel, unsigned int *data)
+ 	struct udevice *dev;
+ 	int ret;
+ 
+-	ret = uclass_get_device_by_name(UCLASS_ADC, name, &dev);
++	if (strcmp(name,"-")) {
++		ret = uclass_get_device_by_name(UCLASS_ADC, name, &dev);
++	} else {
++		ret = uclass_first_device_err(UCLASS_ADC, &dev);
++	}
++
+ 	if (ret)
+ 		return ret;
+ 
+-- 
+2.25.1
+

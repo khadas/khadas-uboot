@@ -1,0 +1,25 @@
+From 814148a6f5374365c79b2c91db1a6356344a8a74 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 15 Oct 2021 11:32:12 +0800
+Subject: [PATCH 1/2] rockchip: rk3399: allow compressed bmp logo
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/rk3399_common.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/configs/rk3399_common.h b/include/configs/rk3399_common.h
+index 6d710da9..9008ecfa 100644
+--- a/include/configs/rk3399_common.h
++++ b/include/configs/rk3399_common.h
+@@ -33,6 +33,7 @@
+ #endif
+ 
+ #define CONFIG_SYS_BOOTM_LEN	(64 << 20)	/* 64M */
++#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(2 << 20)
+ 
+ /* MMC/SD IP block */
+ #define CONFIG_ROCKCHIP_SDHCI_MAX_FREQ	200000000
+-- 
+2.25.1
+

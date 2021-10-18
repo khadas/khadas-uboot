@@ -1,0 +1,27 @@
+From 2b8ebab808e5313555bf20b332fc7452dd49ea6a Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 3 Aug 2021 10:58:09 +0800
+Subject: [PATCH] EFI: console: unicode replace by . if vidconsole output is
+ active
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ lib/efi_loader/Kconfig | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/lib/efi_loader/Kconfig b/lib/efi_loader/Kconfig
+index 156b3915..6c4e93f1 100644
+--- a/lib/efi_loader/Kconfig
++++ b/lib/efi_loader/Kconfig
+@@ -373,4 +373,8 @@ config EFI_ESRT
+ 	help
+ 	  Enabling this option creates the ESRT UEFI system table.
+ 
++config EFI_CONSOLE_UTF_BLOCK
++	bool "console unicode chars replace by . if vidconsole is active"
++	default n
++
+ endif
+-- 
+2.25.1
+

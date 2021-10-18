@@ -1,0 +1,101 @@
+From cb798b82dd04d0617f2dec0d7693fc291891f454 Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:47:58 -0600
+Subject: [PATCH 05/18] pxe: Add a userdata field to the context
+
+Allow the caller to provide some info which is passed back to the
+readfile() method.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ cmd/pxe.c       | 4 ++--
+ cmd/pxe_utils.c | 3 ++-
+ cmd/pxe_utils.h | 6 +++++-
+ cmd/sysboot.c   | 2 +-
+ 4 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index 70dbde3a63..d79b9b733d 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -121,7 +121,7 @@ do_pxe_get(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	struct pxe_context ctx;
+ 	int err, i = 0;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp);
++	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL);
+ 
+ 	if (argc != 1)
+ 		return CMD_RET_USAGE;
+@@ -175,7 +175,7 @@ do_pxe_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	char *pxefile_addr_str;
+ 	struct pxe_context ctx;
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp);
++	pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL);
+ 
+ 	if (argc == 1) {
+ 		pxefile_addr_str = from_env("pxefile_addr_r");
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 2caae6d155..5ad6d3e3d4 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -1432,8 +1432,9 @@ void handle_pxe_menu(struct pxe_context *ctx, struct pxe_menu *cfg)
+ }
+ 
+ void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+-		   pxe_getfile_func getfile)
++		   pxe_getfile_func getfile, void *userdata)
+ {
+ 	ctx->cmdtp = cmdtp;
+ 	ctx->getfile = getfile;
++	ctx->userdata = userdata;
+ }
+diff --git a/cmd/pxe_utils.h b/cmd/pxe_utils.h
+index ca2696f48b..921455f694 100644
+--- a/cmd/pxe_utils.h
++++ b/cmd/pxe_utils.h
+@@ -86,6 +86,7 @@ typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
+  *
+  * @cmdtp: Pointer to command table to use when calling other commands
+  * @getfile: Function called by PXE to read a file
++ * @userdata: Data the caller requires for @getfile
+  */
+ struct pxe_context {
+ 	struct cmd_tbl *cmdtp;
+@@ -99,6 +100,8 @@ struct pxe_context {
+ 	 * Return 0 if OK, -ve on error
+ 	 */
+ 	pxe_getfile_func getfile;
++
++	void *userdata;
+ };
+ 
+ /**
+@@ -192,8 +195,9 @@ int format_mac_pxe(char *outbuf, size_t outbuf_len);
+  * @ctx: Context to set up
+  * @cmdtp: Command table entry which started this action
+  * @getfile: Function to call to read a file
++ * @userdata: Data the caller requires for @getfile - stored in ctx->userdata
+  */
+ void pxe_setup_ctx(struct pxe_context *ctx, struct cmd_tbl *cmdtp,
+-		   pxe_getfile_func getfile);
++		   pxe_getfile_func getfile, void *userdata);
+ 
+ #endif /* __PXE_UTILS_H */
+diff --git a/cmd/sysboot.c b/cmd/sysboot.c
+index 082f23543d..5615e81e9c 100644
+--- a/cmd/sysboot.c
++++ b/cmd/sysboot.c
+@@ -91,7 +91,7 @@ static int do_sysboot(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		env_set("bootfile", filename);
+ 	}
+ 
+-	pxe_setup_ctx(&ctx, cmdtp, NULL);
++	pxe_setup_ctx(&ctx, cmdtp, NULL, NULL);
+ 	if (strstr(argv[3], "ext2")) {
+ 		ctx.getfile = do_get_ext2;
+ 	} else if (strstr(argv[3], "fat")) {
+-- 
+2.25.1
+

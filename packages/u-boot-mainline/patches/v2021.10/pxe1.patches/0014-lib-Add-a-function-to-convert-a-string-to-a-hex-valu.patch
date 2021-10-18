@@ -1,0 +1,136 @@
+From 6ba56ccbe9c84190aac1f57a1b11a56c332f12ef Mon Sep 17 00:00:00 2001
+From: Simon Glass <sjg@chromium.org>
+Date: Thu, 14 Oct 2021 12:48:07 -0600
+Subject: [PATCH 14/18] lib: Add a function to convert a string to a hex value
+
+Add an xtoa() function, similar to itoa() but for hex instead.
+
+Signed-off-by: Simon Glass <sjg@chromium.org>
+---
+ include/vsprintf.h | 16 ++++++++++++++--
+ lib/vsprintf.c     | 20 ++++++++++++++++++--
+ test/print_ut.c    | 24 ++++++++++++++++++++++++
+ 3 files changed, 56 insertions(+), 4 deletions(-)
+
+diff --git a/include/vsprintf.h b/include/vsprintf.h
+index 4479df0af3..b474630146 100644
+--- a/include/vsprintf.h
++++ b/include/vsprintf.h
+@@ -177,14 +177,26 @@ int vsprintf(char *buf, const char *fmt, va_list args);
+  * simple_itoa() - convert an unsigned integer to a string
+  *
+  * This returns a static string containing the decimal representation of the
+- * given value. The returned value may be overwritten by other calls to the
+- * same function, so should be used immediately
++ * given value. The returned value may be overwritten by other calls to other
++ * simple_... functions, so should be used immediately
+  *
+  * @val: Value to convert
+  * @return string containing the decimal representation of @val
+  */
+ char *simple_itoa(ulong val);
+ 
++/**
++ * simple_xtoa() - convert an unsigned integer to a hex string
++ *
++ * This returns a static string containing the hexadecimal representation of the
++ * given value. The returned value may be overwritten by other calls to other
++ * simple_... functions, so should be used immediately
++ *
++ * @val: Value to convert
++ * @return string containing the hexecimal representation of @val
++ */
++char *simple_xtoa(ulong num);
++
+ /**
+  * Format a string and place it in a buffer
+  *
+diff --git a/lib/vsprintf.c b/lib/vsprintf.c
+index d7ee35b477..e634bd70b6 100644
+--- a/lib/vsprintf.c
++++ b/lib/vsprintf.c
+@@ -816,11 +816,12 @@ int vprintf(const char *fmt, va_list args)
+ }
+ #endif
+ 
++static char local_toa[22];
++
+ char *simple_itoa(ulong i)
+ {
+ 	/* 21 digits plus null terminator, good for 64-bit or smaller ints */
+-	static char local[22];
+-	char *p = &local[21];
++	char *p = &local_toa[21];
+ 
+ 	*p-- = '\0';
+ 	do {
+@@ -830,6 +831,21 @@ char *simple_itoa(ulong i)
+ 	return p + 1;
+ }
+ 
++char *simple_xtoa(ulong num)
++{
++	/* 16 digits plus nul terminator, good for 64-bit or smaller ints */
++	char *p = &local_toa[17];
++
++	*--p = '\0';
++	do {
++		p -= 2;
++		hex_byte_pack(p, num & 0xff);
++		num >>= 8;
++	} while (num > 0);
++
++	return p;
++}
++
+ /* We don't seem to have %'d in U-Boot */
+ void print_grouped_ull(unsigned long long int_val, int digits)
+ {
+diff --git a/test/print_ut.c b/test/print_ut.c
+index 4fbb15b6d3..152a8c3334 100644
+--- a/test/print_ut.c
++++ b/test/print_ut.c
+@@ -335,16 +335,40 @@ static int print_itoa(struct unit_test_state *uts)
+ 	ut_asserteq_str("0", simple_itoa(0));
+ 	ut_asserteq_str("2147483647", simple_itoa(0x7fffffff));
+ 	ut_asserteq_str("4294967295", simple_itoa(0xffffffff));
++
++	/* Use #ifdef here to avoid a compiler warning on 32-bit machines */
++#ifdef CONFIG_PHYS_64BIT
+ 	if (sizeof(ulong) == 8) {
+ 		ut_asserteq_str("9223372036854775807",
+ 				simple_itoa((1UL << 63) - 1));
+ 		ut_asserteq_str("18446744073709551615", simple_itoa(-1));
+ 	}
++#endif /* CONFIG_PHYS_64BIT */
+ 
+ 	return 0;
+ }
+ PRINT_TEST(print_itoa, 0);
+ 
++static int print_xtoa(struct unit_test_state *uts)
++{
++	ut_asserteq_str("7f", simple_xtoa(127));
++	ut_asserteq_str("00", simple_xtoa(0));
++	ut_asserteq_str("7fffffff", simple_xtoa(0x7fffffff));
++	ut_asserteq_str("ffffffff", simple_xtoa(0xffffffff));
++
++	/* Use #ifdef here to avoid a compiler warning on 32-bit machines */
++#ifdef CONFIG_PHYS_64BIT
++	if (sizeof(ulong) == 8) {
++		ut_asserteq_str("7fffffffffffffff",
++				simple_xtoa((1UL << 63) - 1));
++		ut_asserteq_str("ffffffffffffffff", simple_xtoa(-1));
++	}
++#endif /* CONFIG_PHYS_64BIT */
++
++	return 0;
++}
++PRINT_TEST(print_xtoa, 0);
++
+ int do_ut_print(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ {
+ 	struct unit_test *tests = UNIT_TEST_SUITE_START(print_test);
+-- 
+2.25.1
+

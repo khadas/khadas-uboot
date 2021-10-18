@@ -1,0 +1,80 @@
+From 1330710e31e4a0957313d40d22f1bdde9ac6301a Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 15 Oct 2021 14:31:41 +0800
+Subject: [PATCH] pxe_utils.c: move append before kernel start
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ boot/pxe_utils.c | 49 ++++++++++++++++++++++++------------------------
+ 1 file changed, 25 insertions(+), 24 deletions(-)
+
+diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
+index 9ba20718..0237183b 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -493,30 +493,6 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
+ 		}
+ 	}
+ 
+-	if ((label->ipappend & 0x3) || label->append) {
+-		char bootargs[CONFIG_SYS_CBSIZE] = "";
+-		char finalbootargs[CONFIG_SYS_CBSIZE];
+-
+-		if (strlen(label->append ?: "") +
+-		    strlen(ip_str) + strlen(mac_str) + 1 > sizeof(bootargs)) {
+-			printf("bootarg overflow %zd+%zd+%zd+1 > %zd\n",
+-			       strlen(label->append ?: ""),
+-			       strlen(ip_str), strlen(mac_str),
+-			       sizeof(bootargs));
+-			return 1;
+-		}
+-
+-		if (label->append)
+-			strncpy(bootargs, label->append, sizeof(bootargs));
+-
+-		strcat(bootargs, ip_str);
+-		strcat(bootargs, mac_str);
+-
+-		cli_simple_process_macros(bootargs, finalbootargs,
+-					  sizeof(finalbootargs));
+-		env_set("bootargs", finalbootargs);
+-		printf("append: %s\n", finalbootargs);
+-	}
+ 
+ 	bootm_argv[1] = env_get("kernel_addr_r");
+ 	/* for FIT, append the configuration identifier */
+@@ -644,6 +620,31 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
+ 		bootm_argc = 4;
+ 	}
+ 
++	if ((label->ipappend & 0x3) || label->append) {
++		char bootargs[CONFIG_SYS_CBSIZE] = "";
++		char finalbootargs[CONFIG_SYS_CBSIZE];
++
++		if (strlen(label->append ?: "") +
++		    strlen(ip_str) + strlen(mac_str) + 1 > sizeof(bootargs)) {
++			printf("bootarg overflow %zd+%zd+%zd+1 > %zd\n",
++			       strlen(label->append ?: ""),
++			       strlen(ip_str), strlen(mac_str),
++			       sizeof(bootargs));
++			return 1;
++		}
++
++		if (label->append)
++			strncpy(bootargs, label->append, sizeof(bootargs));
++
++		strcat(bootargs, ip_str);
++		strcat(bootargs, mac_str);
++
++		cli_simple_process_macros(bootargs, finalbootargs,
++					  sizeof(finalbootargs));
++		env_set("bootargs", finalbootargs);
++		printf("append: %s\n", finalbootargs);
++	}
++
+ 	kernel_addr = genimg_get_kernel_addr(bootm_argv[1]);
+ 	buf = map_sysmem(kernel_addr, 0);
+ 	/* Try bootm for legacy and FIT format image */
+-- 
+2.25.1
+

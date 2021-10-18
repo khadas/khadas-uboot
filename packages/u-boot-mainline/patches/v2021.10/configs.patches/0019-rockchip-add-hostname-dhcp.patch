@@ -1,0 +1,28 @@
+From 92dc148531a833487033092a5042a1242e68da14 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Tue, 8 Jun 2021 16:30:44 +0800
+Subject: [PATCH] rockchip add hostname dhcp
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ include/configs/rockchip-common.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/configs/rockchip-common.h b/include/configs/rockchip-common.h
+index 6610f95b..5497602a 100644
+--- a/include/configs/rockchip-common.h
++++ b/include/configs/rockchip-common.h
+@@ -7,6 +7,10 @@
+ #define _ROCKCHIP_COMMON_H_
+ #include <linux/sizes.h>
+ 
++#define CONFIG_HOSTNAME CONFIG_DEFAULT_DEVICE_TREE
++#define CONFIG_BOOTP_SEND_HOSTNAME	1
++#define CONFIG_BOOTFILE			"boot.scr.uimg"
++
+ #define CONFIG_SYS_NS16550_MEM32
+ 
+ /* ((CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR - 64) * 512) */
+-- 
+2.25.1
+
