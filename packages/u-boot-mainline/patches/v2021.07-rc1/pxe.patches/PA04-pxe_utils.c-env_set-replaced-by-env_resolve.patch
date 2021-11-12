@@ -1,0 +1,34 @@
+From b509785c81608b460bed324f42fbb4781876fcb8 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Fri, 12 Nov 2021 11:02:31 +0800
+Subject: [PATCH] pxe_utils.c: env_set replaced by env_resolve
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/pxe_utils.c | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 7b10f939..f4fd3d4e 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -820,15 +820,7 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 		strcat(bootargs, ip_str);
+ 		strcat(bootargs, mac_str);
+ 
+-		int max_loop=32;
+-		do {
+-			cli_simple_process_macros(bootargs, finalbootargs,
+-						  sizeof(finalbootargs));
+-			cli_simple_process_macros(finalbootargs, bootargs,
+-						  sizeof(bootargs));
+-		} while (strcmp(bootargs, finalbootargs) && max_loop--);
+-
+-		env_set("bootargs", bootargs);
++		env_resolve("bootargs", bootargs);
+ 		printf("append: %s\n", bootargs);
+ 	}
+ 
+-- 
+2.25.1
+

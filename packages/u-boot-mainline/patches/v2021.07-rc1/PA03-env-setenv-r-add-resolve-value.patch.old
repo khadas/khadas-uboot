@@ -1,0 +1,71 @@
+From e2eefee88c5390732c329df0bd2f8f98171740d0 Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Wed, 27 Oct 2021 12:33:25 +0800
+Subject: [PATCH] env: setenv -r add resolve value
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ cmd/nvedit.c | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/cmd/nvedit.c b/cmd/nvedit.c
+index fed36464f5..c073316a48 100644
+--- a/cmd/nvedit.c
++++ b/cmd/nvedit.c
+@@ -214,6 +214,7 @@ static int _do_env_set(int flag, int argc, char * const argv[], int env_flag)
+ {
+ 	int   i, len;
+ 	char  *name, *value, *s;
++	bool  resolve = 0;
+ 	struct env_entry e, *ep;
+ 
+ 	debug("Initial value for argc=%d\n", argc);
+@@ -226,6 +227,9 @@ static int _do_env_set(int flag, int argc, char * const argv[], int env_flag)
+ 			case 'f':		/* force */
+ 				env_flag |= H_FORCE;
+ 				break;
++			case 'r':		/* resolve */
++				resolve = 1;
++				break;
+ 			default:
+ 				return CMD_RET_USAGE;
+ 			}
+@@ -269,6 +273,26 @@ static int _do_env_set(int flag, int argc, char * const argv[], int env_flag)
+ 	if (s != value)
+ 		*--s = '\0';
+ 
++	/*
++	 * deep Resolve vars via process_macros
++	 */
++	if (resolve) {
++		int max_loop = 32;
++		char value2[CONFIG_SYS_CBSIZE];
++
++		do {
++			cli_simple_process_macros(value, value2, CONFIG_SYS_CBSIZE);
++			if (!strcmp(value, value2))
++				break;
++			value = realloc(value, strlen(value2));
++			if (!value) {
++				printf("## Can't realloc %d bytes\n", len);
++				return 1;
++			}
++			strcpy(value, value2);
++		} while (max_loop--);
++	}
++
+ 	e.key	= name;
+ 	e.data	= value;
+ 	hsearch_r(e, ENTER, &ep, &env_htab, env_flag);
+@@ -1325,6 +1349,8 @@ U_BOOT_CMD_COMPLETE(
+ 	"set environment variables",
+ 	"[-f] name value ...\n"
+ 	"    - [forcibly] set environment variable 'name' to 'value ...'\n"
++	"[-r] name value ...\n"
++	"    - [resolve] resolve 'value ...' to environment variable\n"
+ 	"setenv [-f] name\n"
+ 	"    - [forcibly] delete environment variable 'name'",
+ 	var_complete
+-- 
+2.25.1
+
