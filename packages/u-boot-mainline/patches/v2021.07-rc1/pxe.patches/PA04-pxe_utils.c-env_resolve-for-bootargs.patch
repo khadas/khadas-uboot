@@ -1,18 +1,18 @@
-From b509785c81608b460bed324f42fbb4781876fcb8 Mon Sep 17 00:00:00 2001
+From b8a70f2831829a66937ca5a133a5dc9931c71f04 Mon Sep 17 00:00:00 2001
 From: Artem Lapkin <art@khadas.com>
-Date: Fri, 12 Nov 2021 11:02:31 +0800
-Subject: [PATCH] pxe_utils.c: env_set replaced by env_resolve
+Date: Fri, 12 Nov 2021 11:27:20 +0800
+Subject: [PATCH] pxe_utils.c: env_resolve for bootargs
 
 Signed-off-by: Artem Lapkin <art@khadas.com>
 ---
- cmd/pxe_utils.c | 10 +---------
- 1 file changed, 1 insertion(+), 9 deletions(-)
+ cmd/pxe_utils.c | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
 
 diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
-index 7b10f939..f4fd3d4e 100644
+index 7b10f939..d12c49d4 100644
 --- a/cmd/pxe_utils.c
 +++ b/cmd/pxe_utils.c
-@@ -820,15 +820,7 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+@@ -820,16 +820,8 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
  		strcat(bootargs, ip_str);
  		strcat(bootargs, mac_str);
  
@@ -25,9 +25,11 @@ index 7b10f939..f4fd3d4e 100644
 -		} while (strcmp(bootargs, finalbootargs) && max_loop--);
 -
 -		env_set("bootargs", bootargs);
+-		printf("append: %s\n", bootargs);
 +		env_resolve("bootargs", bootargs);
- 		printf("append: %s\n", bootargs);
++		printf("append: %s\n", env_get("bootargs"));
  	}
+ 
  
 -- 
 2.25.1
