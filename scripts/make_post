@@ -18,7 +18,7 @@ cd $UBOOT_DIR2
 md5sum *.bin > list.md5sum
 )
 
-ls -l1 
+#ls -l1
 FEATURES="$(cat ../README.features)"
 
 (
@@ -26,6 +26,11 @@ FEATURES="$(cat ../README.features)"
 echo "# VIMx (VIM1 VIM2 VIM3 VIM3L) and Edge mainline uboot images (GENERATED: $(TZ= date))"
 
 cd $UBOOT_DIR2
+
+echo "
+## META
+"
+grep -e UBOOT_VER -e GIT_DOWNLOAD -e DATE *sd.bin.meta
 
 echo "
 $FEATURES
