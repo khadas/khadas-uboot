@@ -17,8 +17,8 @@ index b42148c7..9ab7bc5e 100644
  		lock = IS_ENABLED(CONFIG_AUTOBOOT_KEYED) &&
  			!IS_ENABLED(CONFIG_AUTOBOOT_KEYED_CTRLC);
 +
-+		if (env_get("autoboot_ctrlc_disable"))
-+		    lock = false;
++		if (env_get("autoboot_ctrlc_disable")) { printf("CTRL+C disabled by env\n");
++		    lock = true ; }
 +
  		if (lock)
  			prev = disable_ctrlc(1); /* disable Ctrl-C checking */
