@@ -1,0 +1,28 @@
+From dd13a134a60d6decb441a22b995a43a69e69340f Mon Sep 17 00:00:00 2001
+From: Artem Lapkin <art@khadas.com>
+Date: Sun, 8 Oct 2023 17:01:45 +0800
+Subject: [PATCH] common/autoboot.c: add env autoboot_ctrlc_disable
+
+Signed-off-by: Artem Lapkin <art@khadas.com>
+---
+ common/autoboot.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/common/autoboot.c b/common/autoboot.c
+index b42148c7..9ab7bc5e 100644
+--- a/common/autoboot.c
++++ b/common/autoboot.c
+@@ -379,6 +379,10 @@ void autoboot_command(const char *s)
+ 
+ 		lock = IS_ENABLED(CONFIG_AUTOBOOT_KEYED) &&
+ 			!IS_ENABLED(CONFIG_AUTOBOOT_KEYED_CTRLC);
++
++		if (env_get("autoboot_ctrlc_disable"))
++		    lock = false;
++
+ 		if (lock)
+ 			prev = disable_ctrlc(1); /* disable Ctrl-C checking */
+ 
+-- 
+2.25.1
+
