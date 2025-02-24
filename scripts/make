@@ -319,10 +319,11 @@ VER=$(cat .version)
 echo "[i] U-Boot version: $VER"
 
 UBOOT_DIR="$PWD"
-[ "$MANUAL" ] && \
-make_target
+
+[ "$MANUAL" ] && make_target
 post_make_target
-)
+
+) || FAIL oops
 
 echo "[i] $BOARD build complited"
 
