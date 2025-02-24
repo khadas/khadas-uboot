@@ -8,11 +8,14 @@ D=$(dirname $0)
 
 . $D/make_
 
-PKG=dtc-1.6.0.tar.gz
+VER=1.6.0
+VER=1.7.2
+
+PKG=dtc-$VER.tar.gz
 
 echo "[i] make $PKG">&2
 
-../download https://github.com/dgibson/dtc/archive/v1.6.0.tar.gz $PKG  || exit 1
+../download https://github.com/dgibson/dtc/archive/v$VER.tar.gz $PKG  || exit 1
 
 cd $DL
 
