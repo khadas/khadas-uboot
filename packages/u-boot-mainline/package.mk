@@ -135,18 +135,40 @@ post_make_target() {
 
 			VIM1|VIM2)
 
-			for python in python python2 python3 ; do
+			pwd
+
+			for python in "$PYTHON" "$RP/$DOWNLOADS"/python2 python python2 python3 ; do
+			[ "$python" ] || continue
+			echo "[i] check $python">&2
 			which $python && break
 			done
 
-			fip/blx_fix.sh fip/bl30.bin fip/zero_tmp fip/bl30_zero.bin fip/bl301.bin fip/bl301_zero.bin fip/bl30_new.bin bl30
-			$python fip/acs_tool.pyc fip/bl2.bin fip/bl2_acs.bin fip/acs.bin 0 || return 1
-			fip/blx_fix.sh fip/bl2_acs.bin fip/zero_tmp fip/bl2_zero.bin fip/bl21.bin fip/bl21_zero.bin fip/bl2_new.bin bl2
-			fip/aml_encrypt_gxl --bl3enc --input fip/bl30_new.bin
-			fip/aml_encrypt_gxl --bl3enc --input fip/bl31.img
-			fip/aml_encrypt_gxl --bl3enc --input fip/bl33.bin
-			fip/aml_encrypt_gxl --bl2sig --input fip/bl2_new.bin --output fip/bl2.n.bin.sig
-			fip/aml_encrypt_gxl --bootmk --output fip/u-boot.bin --bl2 fip/bl2.n.bin.sig --bl30 fip/bl30_new.bin.enc --bl31 fip/bl31.img.enc --bl33 fip/bl33.bin.enc
+			PV=$($python --version)
+
+			case $PV in
+			    Python\ 2*)
+			    ;;
+			    *)
+			    FIX=tc/make_020_python2.sh
+			    echo "[W] this part need python2 - can fix by scripts/$FIX">&2
+			    $RP/$FIX || exit 1
+			    python="$RP/$DOWNLOADS"/python2
+			    ;;
+			esac
+
+			echo $KHADAS_BOARD fip fix ...
+
+			CMD fip/blx_fix.sh fip/bl30.bin fip/zero_tmp fip/bl30_zero.bin fip/bl301.bin fip/bl301_zero.bin fip/bl30_new.bin bl30 || return 1
+			CMD $python fip/acs_tool.pyc fip/bl2.bin fip/bl2_acs.bin fip/acs.bin 0 || return 1
+			CMD fip/blx_fix.sh fip/bl2_acs.bin fip/zero_tmp fip/bl2_zero.bin fip/bl21.bin fip/bl21_zero.bin fip/bl2_new.bin bl2 || return 1
+			CMD fip/aml_encrypt_gxl --bl3enc --input fip/bl30_new.bin || return 1
+			CMD fip/aml_encrypt_gxl --bl3enc --input fip/bl31.img || return 1
+			CMD fip/aml_encrypt_gxl --bl3enc --input fip/bl33.bin || return 1
+			CMD fip/aml_encrypt_gxl --bl2sig --input fip/bl2_new.bin --output fip/bl2.n.bin.sig || return 1
+			CMD fip/aml_encrypt_gxl --bootmk --output fip/u-boot.bin --bl2 fip/bl2.n.bin.sig --bl30 fip/bl30_new.bin.enc --bl31 fip/bl31.img.enc --bl33 fip/bl33.bin.enc || return 1
+
+			echo $KHADAS_BOARD fip fix OK
+
 			;;
 
 			VIM3*)
